@@ -8,22 +8,38 @@ import { JwtPayload } from "jsonwebtoken";
 import config from "../../../config";
 
 // register user
+// const createUser = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const { ...userData } = req.body;
+
+//     console.log(userData, "payload");
+
+//     const result = await UserService.createUserToDB(userData);
+
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: StatusCodes.OK,
+//       message:
+//         "Your account has been successfully created. Verify Your Email By OTP. Check your email",
+//       data: result,
+//     });
+//   },
+// );
+
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { ...userData } = req.body;
-
-    console.log(userData, "payload");
+    const userData = req.body;
 
     const result = await UserService.createUserToDB(userData);
 
     sendResponse(res, {
       success: true,
-      statusCode: StatusCodes.OK,
+      statusCode: StatusCodes.CREATED,
       message:
-        "Your account has been successfully created. Verify Your Email By OTP. Check your email",
+        "Account created successfully. You can verify your account anytime using OTP.",
       data: result,
     });
-  },
+  }
 );
 
 // register admin

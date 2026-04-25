@@ -98,6 +98,129 @@ const deleteAdminFromDB = async (id: any) => {
 
 
 // --- USER SERVICES ---
+// const createUserToDB = async (payload: any) => {
+//   const { email, phone } = payload;
+
+//   const identifier = email || phone;
+
+//   if (!identifier) {
+//     throw new ApiError(
+//       StatusCodes.BAD_REQUEST,
+//       "Email or phone is required"
+//     );
+//   }
+
+//   /* ================= DUPLICATE CHECK (HYBRID SAFE) ================= */
+//   const orConditions: any[] = [];
+
+//   if (email) {
+//     orConditions.push({ email: normalizeIdentifier(email) });
+//   }
+
+//   if (phone) {
+//     orConditions.push({ phone: normalizeIdentifier(phone) });
+//   }
+
+//   const isExistUser = await User.findOne({
+//     $or: orConditions,
+//   });
+
+//   if (isExistUser) {
+//     throw new ApiError(
+//       StatusCodes.CONFLICT,
+//       "Email or phone already exists"
+//     );
+//   }
+
+//   /* ================= CREATE USER ================= */
+//   const createUser = await User.create({
+//     ...payload,
+//     email: email ? normalizeIdentifier(email) : undefined,
+//     phone: phone ? normalizeIdentifier(phone) : undefined,
+//   });
+
+//   if (!createUser) {
+//     throw new ApiError(
+//       StatusCodes.BAD_REQUEST,
+//       "Failed to create user"
+//     );
+//   }
+
+//   /* ================= OTP GENERATION ================= */
+//   const otp = generateOTP();
+
+//   const authentication = {
+//     oneTimeCode: otp,
+//     expireAt: new Date(Date.now() + 3 * 60000),
+//   };
+
+//   await User.findByIdAndUpdate(createUser._id, {
+//     $set: { authentication },
+//   });
+
+//   /* ================= SEND OTP (EMAIL OR PHONE) ================= */
+
+//   // EMAIL FLOW
+//   if (createUser.email) {
+//     const values = {
+//       name: createUser.name,
+//       otp,
+//       email: createUser.email,
+//     };
+
+//     const template = emailTemplate.createAccount(values);
+//     await emailHelper.sendEmail(template);
+//   }
+
+//   // PHONE FLOW
+//   else if (createUser.phone) {
+//     if (!createUser.countryCode) {
+//       throw new ApiError(
+//         StatusCodes.BAD_REQUEST,
+//         "Country code is required for phone verification"
+//       );
+//     }
+
+//     await twilioService.sendOTPWithVerify(
+//       createUser.phone,
+//       createUser.countryCode
+//     );
+//   }
+
+//   /* ================= JWT TOKEN ================= */
+//   const token = jwtHelper.createToken(
+//     {
+//       id: createUser._id,
+//       email: createUser.email,
+//       phone: createUser.phone,
+//       role: createUser.role,
+//     },
+//     config.jwt.jwt_secret as Secret,
+//     config.jwt.jwt_expire_in as string
+//   );
+
+//   /* ================= ADMIN NOTIFICATION ================= */
+//   const admin = await User.findOne({
+//     role: USER_ROLES.SUPER_ADMIN,
+//   }).select("_id name");
+
+//   if (admin) {
+//     await sendNotifications({
+//       title: "New User Signup",
+//       text: "New user signed up successfully",
+//       receiver: admin._id.toString(),
+//       type: NOTIFICATION_TYPE.ADMIN,
+//       referenceId: createUser._id.toString(),
+//       referenceModel: NOTIFICATION_REFERENCE_MODEL.USER,
+//     });
+//   }
+
+//   return {
+//     token,
+//     user: createUser,
+//   };
+// };
+
 const createUserToDB = async (payload: any) => {
   const { email, phone } = payload;
 
@@ -110,7 +233,7 @@ const createUserToDB = async (payload: any) => {
     );
   }
 
-  /* ================= DUPLICATE CHECK (HYBRID SAFE) ================= */
+  /* ================= DUPLICATE CHECK ================= */
   const orConditions: any[] = [];
 
   if (email) {
@@ -121,9 +244,7 @@ const createUserToDB = async (payload: any) => {
     orConditions.push({ phone: normalizeIdentifier(phone) });
   }
 
-  const isExistUser = await User.findOne({
-    $or: orConditions,
-  });
+  const isExistUser = await User.findOne({ $or: orConditions });
 
   if (isExistUser) {
     throw new ApiError(
@@ -132,12 +253,18 @@ const createUserToDB = async (payload: any) => {
     );
   }
 
-  /* ================= CREATE USER ================= */
-  const createUser = await User.create({
-    ...payload,
+  /* ================= CLEAN USER DATA ================= */
+  const userData = {
+    name: payload.name,
     email: email ? normalizeIdentifier(email) : undefined,
     phone: phone ? normalizeIdentifier(phone) : undefined,
-  });
+    countryCode: payload.countryCode,
+    password: payload.password,
+    verified: false,
+  };
+
+  /* ================= CREATE USER ================= */
+  const createUser = await User.create(userData);
 
   if (!createUser) {
     throw new ApiError(
@@ -146,21 +273,18 @@ const createUserToDB = async (payload: any) => {
     );
   }
 
-  /* ================= OTP GENERATION ================= */
+  /* ================= OTP GENERATION (NON-BLOCKING) ================= */
   const otp = generateOTP();
 
-  const authentication = {
+  createUser.authentication = {
     oneTimeCode: otp,
     expireAt: new Date(Date.now() + 3 * 60000),
-  };
+  } as any;
 
-  await User.findByIdAndUpdate(createUser._id, {
-    $set: { authentication },
-  });
+  await createUser.save();
 
-  /* ================= SEND OTP (EMAIL OR PHONE) ================= */
+  /* ================= SEND OTP ================= */
 
-  // EMAIL FLOW
   if (createUser.email) {
     const values = {
       name: createUser.name,
@@ -170,14 +294,11 @@ const createUserToDB = async (payload: any) => {
 
     const template = emailTemplate.createAccount(values);
     await emailHelper.sendEmail(template);
-  }
-
-  // PHONE FLOW
-  else if (createUser.phone) {
+  } else if (createUser.phone) {
     if (!createUser.countryCode) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
-        "Country code is required for phone verification"
+        "Country code is required"
       );
     }
 
