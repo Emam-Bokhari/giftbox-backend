@@ -45,11 +45,21 @@ const getAllLotteries = catchAsync(async (req, res) => {
     })
 })
 
-
+const getSingleLottery = catchAsync(async (req, res) => {
+    const {id} = req.params;
+    const lottery = await LotteryServices.getSingleLotteryFromDB(id);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Lottery found successfully",
+        data: lottery,
+    })
+})
 
 export const LotteryControllers = {
     createLottery,
     getActiveLottery,
     getLotteryById,
     getAllLotteries,
+    getSingleLottery,
 }

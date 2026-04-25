@@ -19,6 +19,10 @@ router.route("/")
     .get(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN,),
         LotteryControllers.getAllLotteries);
 
+router.route("/:id")
+    .get(auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN,),
+        LotteryControllers.getSingleLottery);
+
 router.route("/active")
     .get(auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN,),
         LotteryControllers.getActiveLottery);
