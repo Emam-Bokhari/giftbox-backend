@@ -111,201 +111,220 @@ const createLotteryToDB = async (payload: TLottery) => {
 };
 
 const getActiveLotteryFromDB = async () => {
-  const activeLottery = await Lottery.findOne({
-    status: LOTTERY_STATUS.ACTIVE,
-  });
+    const activeLottery = await Lottery.findOne({
+        status: LOTTERY_STATUS.ACTIVE,
+    });
 
-  if (!activeLottery) {
-    throw new ApiError(404, "No active lottery found");
-  }
+    if (!activeLottery) {
+        throw new ApiError(404, "No active lottery found");
+    }
 
-  return activeLottery;
+    return activeLottery;
 };
 
 const getLotteryByIdFromDB = async (id: string) => {
-  const lottery = await Lottery.findById(id);
+    const lottery = await Lottery.findById(id);
 
-  if (!lottery) {
-    throw new ApiError(404, "Lottery not found");
-  }
+    if (!lottery) {
+        throw new ApiError(404, "Lottery not found");
+    }
 
-  return lottery;
+    return lottery;
 };
 
 const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
-  const lotteryQuery = new QueryBuilder(
-    Lottery.find(),
-    query
-  )
-    .search(["title", "description", "ticketNumber"])
-    .filter()
-    .sort()
-    .paginate()
-    .fields();
+    const lotteryQuery = new QueryBuilder(
+        Lottery.find(),
+        query
+    )
+        .search(["title", "description", "ticketNumber"])
+        .filter()
+        .sort()
+        .paginate()
+        .fields();
 
-  const data = await lotteryQuery.modelQuery;
-  const meta = await lotteryQuery.countTotal();
+    const data = await lotteryQuery.modelQuery;
+    const meta = await lotteryQuery.countTotal();
 
-  return {
-    meta,
-    data,
-  };
+    return {
+        meta,
+        data,
+    };
 };
 
 const getSingleLotteryFromDB = async (id: string) => {
-  if (!id) {
-    throw new ApiError(400, "Lottery ID is required");
-  }
+    if (!id) {
+        throw new ApiError(400, "Lottery ID is required");
+    }
 
-  const lottery = await Lottery.findById(id);
+    const lottery = await Lottery.findById(id);
 
-  if (!lottery) {
-    throw new ApiError(404, "Lottery not found");
-  }
+    if (!lottery) {
+        throw new ApiError(404, "Lottery not found");
+    }
 
-  return lottery;
+    return lottery;
 };
 
 const updateLotteryIntoDB = async (
-  id: string,
-  payload: any
+    id: string,
+    payload: any
 ) => {
-  if (!id) {
-    throw new ApiError(400, "Lottery ID is required");
-  }
-
-  const lottery = await Lottery.findById(id);
-
-  if (!lottery) {
-    throw new ApiError(404, "Lottery not found");
-  }
-
-  // Restrict update for DRAWN lotteries
-  if (lottery.status === LOTTERY_STATUS.DRAWN) {
-    throw new ApiError(
-      400,
-      "Cannot update a drawn lottery"
-    );
-  }
-
-  //  If ACTIVE → restrict critical fields
-  if (lottery.status === LOTTERY_STATUS.ACTIVE) {
-    const restrictedFields = [
-      "ticketPrice",
-      "currency",
-      "mode",
-      "startAt",
-      "endAt",
-    ];
-
-    restrictedFields.forEach((field) => {
-      if (payload[field]) {
-        throw new ApiError(
-          400,
-          `Cannot update ${field} of an active lottery`
-        );
-      }
-    });
-  }
-
-  // If SCHEDULED → validate dates
-  if (payload.startAt && payload.endAt) {
-    const start = new Date(payload.startAt);
-    const end = new Date(payload.endAt);
-
-    if (start >= end) {
-      throw new ApiError(
-        400,
-        "Start time must be before end time"
-      );
+    if (!id) {
+        throw new ApiError(400, "Lottery ID is required");
     }
-  }
 
-  const updatedLottery = await Lottery.findByIdAndUpdate(
-    id,
-    { $set: payload },
-    { new: true, runValidators: true }
-  );
+    const lottery = await Lottery.findById(id);
 
-  return updatedLottery;
-}
+    if (!lottery) {
+        throw new ApiError(404, "Lottery not found");
+    }
+
+    // ❌ DRAWN = fully locked
+    if (lottery.status === LOTTERY_STATUS.DRAWN) {
+        throw new ApiError(400, "Cannot update a drawn lottery");
+    }
+
+    // 🔵 ACTIVE = strict lock
+    if (lottery.status === LOTTERY_STATUS.ACTIVE) {
+        const restrictedFields = [
+            "ticketPrice",
+            "currency",
+            "mode",
+            "startAt",
+            "endAt",
+            "status",
+        ];
+
+        restrictedFields.forEach((field) => {
+            if (payload[field] !== undefined) {
+                throw new ApiError(
+                    400,
+                    `Cannot update ${field} of an active lottery`
+                );
+            }
+        });
+    }
+
+    // 🟡 SCHEDULED = partial restriction (IMPORTANT FIX)
+    if (lottery.status === LOTTERY_STATUS.SCHEDULED) {
+        const restrictedFields = [
+            "startAt",
+            "mode",
+            "status",
+        ];
+
+        restrictedFields.forEach((field) => {
+            if (payload[field] !== undefined) {
+                throw new ApiError(
+                    400,
+                    `Cannot update ${field} of a scheduled lottery`
+                );
+            }
+        });
+    }
+
+    // 🧪 date validation (safe for DRAFT or allowed cases)
+    if (payload.startAt && payload.endAt) {
+        const start = new Date(payload.startAt);
+        const end = new Date(payload.endAt);
+
+        if (start >= end) {
+            throw new ApiError(
+                400,
+                "Start time must be before end time"
+            );
+        }
+    }
+
+    // 🚀 final update
+    const updatedLottery = await Lottery.findByIdAndUpdate(
+        id,
+        { $set: payload },
+        {
+            new: true,
+            runValidators: true,
+        }
+    );
+
+    return updatedLottery;
+};
+
 
 const updateLotteryStatusIntoDB = async (
-  id: string,
-  status: LOTTERY_STATUS
+    id: string,
+    status: LOTTERY_STATUS
 ) => {
-  if (!id) {
-    throw new ApiError(400, "Lottery ID is required");
-  }
+    if (!id) {
+        throw new ApiError(400, "Lottery ID is required");
+    }
 
-  if (!status) {
-    throw new ApiError(400, "Status is required");
-  }
+    if (!status) {
+        throw new ApiError(400, "Status is required");
+    }
 
-  const lottery = await Lottery.findById(id);
+    const lottery = await Lottery.findById(id);
 
-  if (!lottery) {
-    throw new ApiError(404, "Lottery not found");
-  }
+    if (!lottery) {
+        throw new ApiError(404, "Lottery not found");
+    }
 
-  // If already DRAWN → no further change allowed
-  if (lottery.status === LOTTERY_STATUS.DRAWN) {
-    throw new ApiError(
-      400,
-      "Cannot change status of a drawn lottery"
-    );
-  }
+    // If already DRAWN → no further change allowed
+    if (lottery.status === LOTTERY_STATUS.DRAWN) {
+        throw new ApiError(
+            400,
+            "Cannot change status of a drawn lottery"
+        );
+    }
 
-  //  Prevent invalid transitions
-  const invalidTransitions = [
-    `${LOTTERY_STATUS.DRAWN}->${LOTTERY_STATUS.ACTIVE}`,
-    `${LOTTERY_STATUS.DRAWN}->${LOTTERY_STATUS.SCHEDULED}`,
-    `${LOTTERY_STATUS.ENDED}->${LOTTERY_STATUS.ACTIVE}`,
-  ];
+    //  Prevent invalid transitions
+    const invalidTransitions = [
+        `${LOTTERY_STATUS.DRAWN}->${LOTTERY_STATUS.ACTIVE}`,
+        `${LOTTERY_STATUS.DRAWN}->${LOTTERY_STATUS.SCHEDULED}`,
+        `${LOTTERY_STATUS.ENDED}->${LOTTERY_STATUS.ACTIVE}`,
+    ];
 
-  const transition = `${lottery.status}->${status}`;
+    const transition = `${lottery.status}->${status}`;
 
-  if (invalidTransitions.includes(transition)) {
-    throw new ApiError(
-      400,
-      `Invalid status transition from ${lottery.status} to ${status}`
-    );
-  }
+    if (invalidTransitions.includes(transition)) {
+        throw new ApiError(
+            400,
+            `Invalid status transition from ${lottery.status} to ${status}`
+        );
+    }
 
-  //  Update status
-  lottery.status = status;
-  await lottery.save();
+    //  Update status
+    lottery.status = status;
+    await lottery.save();
 
-  return lottery;
+    return lottery;
 };
 
 const deleteLotteryFromDB = async (id: string) => {
-  if (!id) {
-    throw new ApiError(400, "Lottery ID is required");
-  }
+    if (!id) {
+        throw new ApiError(400, "Lottery ID is required");
+    }
 
-  const lottery = await Lottery.findById(id);
+    const lottery = await Lottery.findById(id);
 
-  if (!lottery) {
-    throw new ApiError(404, "Lottery not found");
-  }
+    if (!lottery) {
+        throw new ApiError(404, "Lottery not found");
+    }
 
-  //  Safety rule (recommended)
-  if (
-    lottery.status === LOTTERY_STATUS.ACTIVE ||
-    lottery.status === LOTTERY_STATUS.SCHEDULED
-  ) {
-    throw new ApiError(
-      400,
-      "Active or scheduled lottery cannot be deleted"
-    );
-  }
+    //  Safety rule (recommended)
+    if (
+        lottery.status === LOTTERY_STATUS.ACTIVE ||
+        lottery.status === LOTTERY_STATUS.SCHEDULED
+    ) {
+        throw new ApiError(
+            400,
+            "Active or scheduled lottery cannot be deleted"
+        );
+    }
 
-  await Lottery.findByIdAndDelete(id);
+    const data = await Lottery.findByIdAndDelete(id);
 
-  return {
-    message: "Lottery deleted successfully",
-  };
+    return data;
 };
 
 export const LotteryServices = {
