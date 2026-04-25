@@ -233,6 +233,55 @@ const updateLotteryIntoDB = async (
   return updatedLottery;
 }
 
+const updateLotteryStatusIntoDB = async (
+  id: string,
+  status: LOTTERY_STATUS
+) => {
+  if (!id) {
+    throw new ApiError(400, "Lottery ID is required");
+  }
+
+  if (!status) {
+    throw new ApiError(400, "Status is required");
+  }
+
+  const lottery = await Lottery.findById(id);
+
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
+
+  // If already DRAWN → no further change allowed
+  if (lottery.status === LOTTERY_STATUS.DRAWN) {
+    throw new ApiError(
+      400,
+      "Cannot change status of a drawn lottery"
+    );
+  }
+
+  //  Prevent invalid transitions
+  const invalidTransitions = [
+    `${LOTTERY_STATUS.DRAWN}->${LOTTERY_STATUS.ACTIVE}`,
+    `${LOTTERY_STATUS.DRAWN}->${LOTTERY_STATUS.SCHEDULED}`,
+    `${LOTTERY_STATUS.ENDED}->${LOTTERY_STATUS.ACTIVE}`,
+  ];
+
+  const transition = `${lottery.status}->${status}`;
+
+  if (invalidTransitions.includes(transition)) {
+    throw new ApiError(
+      400,
+      `Invalid status transition from ${lottery.status} to ${status}`
+    );
+  }
+
+  //  Update status
+  lottery.status = status;
+  await lottery.save();
+
+  return lottery;
+};
+
 const deleteLotteryFromDB = async (id: string) => {
   if (!id) {
     throw new ApiError(400, "Lottery ID is required");
@@ -268,6 +317,7 @@ export const LotteryServices = {
     getLotteryByIdFromDB,
     getAllLotteriesFromDB,
     getSingleLotteryFromDB,
+    updateLotteryStatusIntoDB,
     updateLotteryIntoDB,
     deleteLotteryFromDB,
 }
