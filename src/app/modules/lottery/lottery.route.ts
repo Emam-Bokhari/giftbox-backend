@@ -17,4 +17,8 @@ router.route("/")
         validateRequest(LotteryValidationSchema.createLotteryZodSchema),
         LotteryControllers.createLottery);
 
+router.route("/active")
+    .get(auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN,),
+        LotteryControllers.getActiveLottery);
+
 export const LotteryRoutes = router;
