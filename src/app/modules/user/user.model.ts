@@ -1,9 +1,8 @@
 import { model, Schema } from "mongoose";
-import { GENDER, HOST_STATUS, STATUS, USER_ROLES } from "../../../enums/user";
+import { GENDER, STATUS, USER_ROLES } from "../../../enums/user";
 import { IUser, UserModal } from "./user.interface";
 import bcrypt from "bcrypt";
-import ApiError from "../../../errors/ApiErrors";
-import { StatusCodes } from "http-status-codes";
+
 import config from "../../../config";
 
 const userSchema = new Schema<IUser, UserModal>(
@@ -19,9 +18,10 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
       lowercase: true,
+      trim: true,
     },
     profileImage: {
       type: String,
@@ -32,10 +32,6 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       required: false,
       default: "",
-    },
-    membershipId: {
-      type: String,
-      required: false,
     },
     password: {
       type: String,
@@ -50,14 +46,23 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     phone: {
       type: String,
+      required: true,
+    },
+    countryCode: {
+      type: String,
+      required: false,
+      default: "+223",
+    },
+    city: {
+      type: String,
+      required: true,
+    },
+    gender: {
+      type: String,
+      enum: Object.values(GENDER),
       required: false,
     },
     firebaseUid: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    userName: {
       type: String,
       unique: true,
       sparse: true,
@@ -86,14 +91,6 @@ const userSchema = new Schema<IUser, UserModal>(
         default: "",
       },
     },
-    stripeConnectedAccountId: {
-      type: String,
-      required: false,
-    },
-    isStripeOnboarded: {
-      type: Boolean,
-      default: false,
-    },
     authentication: {
       type: {
         isResetPassword: {
@@ -119,20 +116,6 @@ const userSchema = new Schema<IUser, UserModal>(
   {
     timestamps: true,
     versionKey: false,
-    toJSON: {
-      virtuals: true,
-      transform: (_doc, ret) => {
-        delete ret.id;
-        return ret;
-      },
-    },
-    toObject: {
-      virtuals: true,
-      transform: (_doc, ret) => {
-        delete ret.id;
-        return ret;
-      },
-    },
   },
 );
 
@@ -147,11 +130,6 @@ userSchema.statics.isExistUserByEmail = async (email: string) => {
   return isExist;
 };
 
-//account check
-userSchema.statics.isAccountCreated = async (id: string) => {
-  const isUserExist: any = await User.findById(id);
-  return isUserExist.accountInformation.status;
-};
 
 //is match password
 userSchema.statics.isMatchPassword = async (
