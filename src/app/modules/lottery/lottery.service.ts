@@ -250,7 +250,6 @@ const updateLotteryIntoDB = async (
     return updatedLottery;
 };
 
-
 const updateLotteryStatusIntoDB = async (
     id: string,
     status: LOTTERY_STATUS
