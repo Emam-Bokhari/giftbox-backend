@@ -1,0 +1,7 @@
+export enum LOTTERY_STATUS {
+  DRAFT = "DRAFT",
+  SCHEDULED = "SCHEDULED",
+  ACTIVE = "ACTIVE",
+  ENDED = "ENDED",
+  DRAWN = "DRAWN",
+}
