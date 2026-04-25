@@ -9,136 +9,124 @@ class QueryBuilder<T> {
     this.query = query;
   }
 
-  // 🔍 Search (String + ObjectId support)
+  // SEARCH (generic + safe)
   search(searchableFields: string[]) {
     const searchTerm = this.query.searchTerm as string;
+
     if (!searchTerm) return this;
 
     const orConditions: FilterQuery<T>[] = [];
 
-    // String field search only
     searchableFields.forEach((field) => {
       orConditions.push({
         [field]: { $regex: searchTerm, $options: "i" },
       } as FilterQuery<T>);
     });
 
-    // Support combined brand and model search if both are searchable
-    if (
-      searchableFields.includes("brand") &&
-      searchableFields.includes("model")
-    ) {
-      orConditions.push({
-        $expr: {
-          $or: [
-            {
-              $regexMatch: {
-                input: { $concat: ["$brand", " ", "$model"] },
-                regex: searchTerm,
-                options: "i",
-              },
-            },
-            {
-              $regexMatch: {
-                input: { $concat: ["$model", " ", "$brand"] },
-                regex: searchTerm,
-                options: "i",
-              },
-            },
-          ],
-        },
-      } as FilterQuery<T>);
-    }
-
-    // ObjectId exact match
+    // ObjectId search support
     if (Types.ObjectId.isValid(searchTerm)) {
       orConditions.push({
         _id: new Types.ObjectId(searchTerm),
       } as FilterQuery<T>);
-      orConditions.push({
-        bookingId: new Types.ObjectId(searchTerm),
-      } as FilterQuery<T>);
     }
 
-    this.modelQuery = this.modelQuery.find({ $or: orConditions });
+    this.modelQuery = this.modelQuery.find({
+      $or: orConditions,
+    });
+
     return this;
   }
 
-  // 🎯 Filter (Boolean, Date, exact match)
+  // FILTER (fully generic)
   filter() {
     const queryObj = { ...this.query };
+
     const excludeFields = ["searchTerm", "sort", "limit", "page", "fields"];
+
     excludeFields.forEach((el) => delete queryObj[el]);
 
-    // HISTORY special case
-    if (queryObj.status === "HISTORY") {
-      delete queryObj.status;
-      this.modelQuery = this.modelQuery
-        .where("status")
-        .in(["CANCELLED", "COMPLETED"]);
+    // remove empty values
+    Object.keys(queryObj).forEach((key) => {
+      if (
+        queryObj[key] === undefined ||
+        queryObj[key] === null ||
+        queryObj[key] === ""
+      ) {
+        delete queryObj[key];
+      }
+    });
+
+    // ONLY valid lottery statuses allowed
+    const validStatuses = [
+      "DRAFT",
+      "SCHEDULED",
+      "ACTIVE",
+      "ENDED",
+      "DRAWN",
+    ];
+
+    if (queryObj.status) {
+      if (!validStatuses.includes(queryObj.status as string)) {
+        delete queryObj.status; // ignore invalid status
+      }
     }
 
-    // Boolean & Date filters (for Booking)
-    ["checkIn", "checkOut", "isCancelled"].forEach((field) => {
-      if (queryObj[field] !== undefined) {
-        this.modelQuery = this.modelQuery.where(field).equals(queryObj[field]);
-        delete queryObj[field];
-      }
-    });
-
-    ["fromDate", "toDate"].forEach((field) => {
-      if (queryObj[field]) {
-        const date = new Date(queryObj[field] as string);
-        if (field === "fromDate")
-          this.modelQuery = this.modelQuery
-            .where("fromDate")
-            .gte(date.getTime());
-        if (field === "toDate")
-          this.modelQuery = this.modelQuery.where("toDate").lte(date.getTime());
-        delete queryObj[field];
-      }
-    });
-
     if (Object.keys(queryObj).length > 0) {
-      this.modelQuery = this.modelQuery.find(queryObj as FilterQuery<T>);
+      this.modelQuery = this.modelQuery.find(
+        queryObj as FilterQuery<T>
+      );
     }
 
     return this;
   }
 
-  // ↕️ Sort
+  //  SORT
   sort() {
     const sort =
       (this.query.sort as string)?.split(",").join(" ") || "-createdAt";
+
     this.modelQuery = this.modelQuery.sort(sort);
+
     return this;
   }
 
-  // 📄 Pagination
+  //  PAGINATION
   paginate() {
     const page = Number(this.query.page) || 1;
     const limit = Number(this.query.limit) || 10;
+
     const skip = (page - 1) * limit;
+
     this.modelQuery = this.modelQuery.skip(skip).limit(limit);
+
     return this;
   }
 
-  // 📌 Field Selection
+  //  FIELD SELECTION
   fields() {
     const fields =
       (this.query.fields as string)?.split(",").join(" ") || "-__v";
+
     this.modelQuery = this.modelQuery.select(fields);
+
     return this;
   }
 
-  // 📊 Meta Count
+  // COUNT META
   async countTotal() {
     const filter = this.modelQuery.getFilter();
+
     const total = await this.modelQuery.model.countDocuments(filter);
+
     const page = Number(this.query.page) || 1;
     const limit = Number(this.query.limit) || 10;
-    const totalPage = Math.ceil(total / limit);
-    return { page, limit, total, totalPage };
+
+    return {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    };
   }
 }
 
