@@ -6,6 +6,7 @@ import colors from "colors";
 import { socketHelper } from "./helpers/socketHelper";
 import { Server } from "socket.io";
 import seedSuperAdmin from "./DB";
+import { initCronJobs } from "./config/cron";
 //uncaught exception
 process.on("uncaughtException", (error) => {
   errorLogger.error("uncaughtException Detected", error);
@@ -19,6 +20,8 @@ async function main() {
     // create super admin
     seedSuperAdmin();
     // await redisClient.connect();
+    // init cron jobs
+    initCronJobs();
 
     mongoose.connect(config.database_url as string);
     logger.info(colors.green("🚀 Database connected successfully"));
