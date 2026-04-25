@@ -8,7 +8,7 @@ import { SettingsValidationSchema } from "./settings.validation";
 const router = express.Router();
 
 
-router.route("/settings")
+router.route("/")
     .get(SettingsControllers.getSettings)
     .post(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
         validateRequest(SettingsValidationSchema.settingsValidationSchema),
