@@ -40,22 +40,25 @@ router.post(
   AuthController.changePassword
 );
 
-/* ================= VERIFY PHONE OTP ================= */
+/* ================= VERIFY OTP (HYBRID EMAIL/PHONE) ================= */
 router.post(
-  "/verify-phone",
-  validateRequest(AuthValidation.createVerifyPhoneZodSchema),
-  AuthController.verifyPhone
+  "/verify-otp",
+  validateRequest(AuthValidation.createVerifyOtpZodSchema),
+  AuthController.verifyOtp
 );
 
 /* ================= RESEND OTP ================= */
 router.post(
   "/resend-otp",
   validateRequest(AuthValidation.createResendOtpZodSchema),
-  AuthController.resendVerificationOtp
+  AuthController.resendOtp
 );
 
 /* ================= REFRESH TOKEN ================= */
-router.post("/refresh-token", AuthController.newAccessToken);
+router.post(
+  "/refresh-token",
+  AuthController.newAccessToken
+);
 
 /* ================= DELETE ACCOUNT ================= */
 router.delete(

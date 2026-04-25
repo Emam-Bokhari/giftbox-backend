@@ -5,7 +5,7 @@ import { JwtPayload } from "jsonwebtoken";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 
-// ================= LOGIN =================
+/* ================= LOGIN ================= */
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.loginUserFromDB(req.body);
 
@@ -17,9 +17,11 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// ================= FORGET PASSWORD =================
+/* ================= FORGET PASSWORD ================= */
 const forgetPassword = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.forgetPasswordToDB(req.body);
+  const { identifier } = req.body;
+
+  const result = await AuthService.forgetPasswordToDB(identifier);
 
   sendResponse(res, {
     success: true,
@@ -29,7 +31,7 @@ const forgetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// ================= RESET PASSWORD =================
+/* ================= RESET PASSWORD ================= */
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const token = req.headers.resettoken as string;
 
@@ -43,9 +45,9 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// ================= CHANGE PASSWORD =================
+/* ================= CHANGE PASSWORD ================= */
 const changePassword = catchAsync(async (req: Request, res: Response) => {
-  await AuthService.changePasswordToDB(
+  const result = await AuthService.changePasswordToDB(
     req.user as JwtPayload,
     req.body
   );
@@ -53,11 +55,11 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: "Password changed successfully",
+    message: result.message,
   });
 });
 
-// ================= NEW ACCESS TOKEN =================
+/* ================= NEW ACCESS TOKEN ================= */
 const newAccessToken = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.newAccessTokenToUser(req.body.token);
 
@@ -69,9 +71,9 @@ const newAccessToken = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// ================= RESEND OTP =================
-const resendVerificationOtp = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.resendVerificationOtpToDB(req.body);
+/* ================= RESEND OTP ================= */
+const resendOtp = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.resendOtpToDB(req.body);
 
   sendResponse(res, {
     success: true,
@@ -81,7 +83,7 @@ const resendVerificationOtp = catchAsync(async (req: Request, res: Response) => 
   });
 });
 
-// ================= DELETE USER =================
+/* ================= DELETE USER ================= */
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.deleteUserFromDB(
     req.user as JwtPayload,
@@ -96,9 +98,9 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// ================= VERIFY PHONE OTP =================
-const verifyPhone = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.verifyPhoneToDB(req.body);
+/* ================= VERIFY OTP (PHONE/EMAIL HYBRID) ================= */
+const verifyOtp = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.verifyOtpToDB(req.body);
 
   sendResponse(res, {
     success: true,
@@ -108,15 +110,14 @@ const verifyPhone = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-
+/* ================= EXPORT ================= */
 export const AuthController = {
   loginUser,
   forgetPassword,
   resetPassword,
   changePassword,
   newAccessToken,
-  resendVerificationOtp,
+  resendOtp,
   deleteUser,
-  verifyPhone,
+  verifyOtp,
 };

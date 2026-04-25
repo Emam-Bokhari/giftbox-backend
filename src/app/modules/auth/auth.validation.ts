@@ -1,10 +1,14 @@
 import { z } from "zod";
 
-/* ================= PHONE OTP VERIFY ================= */
-const createVerifyPhoneZodSchema = z.object({
+/* ================= IDENTIFIER (EMAIL OR PHONE) ================= */
+const identifierSchema = z.string({
+  required_error: "Email or phone is required",
+});
+
+/* ================= OTP VERIFY ================= */
+const createVerifyOtpZodSchema = z.object({
   body: z.object({
-    phone: z.string({ required_error: "Phone is required" }),
-    countryCode: z.string({ required_error: "Country code is required" }),
+    identifier: identifierSchema,
     code: z.string({ required_error: "OTP code is required" }),
   }),
 });
@@ -12,8 +16,7 @@ const createVerifyPhoneZodSchema = z.object({
 /* ================= LOGIN ================= */
 const createLoginZodSchema = z.object({
   body: z.object({
-    phone: z.string({ required_error: "Phone is required" }),
-    countryCode: z.string({ required_error: "Country code is required" }),
+    identifier: identifierSchema,
     password: z.string({ required_error: "Password is required" }),
 
     fcmToken: z.string().optional(),
@@ -25,8 +28,7 @@ const createLoginZodSchema = z.object({
 /* ================= FORGET PASSWORD ================= */
 const createForgetPasswordZodSchema = z.object({
   body: z.object({
-    phone: z.string({ required_error: "Phone is required" }),
-    countryCode: z.string({ required_error: "Country code is required" }),
+    identifier: identifierSchema,
   }),
 });
 
@@ -58,13 +60,12 @@ const createChangePasswordZodSchema = z.object({
 /* ================= RESEND OTP ================= */
 const createResendOtpZodSchema = z.object({
   body: z.object({
-    phone: z.string({ required_error: "Phone is required" }),
-    countryCode: z.string({ required_error: "Country code is required" }),
+    identifier: identifierSchema,
   }),
 });
 
 export const AuthValidation = {
-  createVerifyPhoneZodSchema,
+  createVerifyOtpZodSchema,
   createLoginZodSchema,
   createForgetPasswordZodSchema,
   createResetPasswordZodSchema,

@@ -1,395 +1,278 @@
 import bcrypt from "bcrypt";
-import { StatusCodes } from "http-status-codes";
 import { JwtPayload, Secret } from "jsonwebtoken";
 import config from "../../../config";
 import ApiError from "../../../errors/ApiErrors";
 import { jwtHelper } from "../../../helpers/jwtHelper";
-import {
-  IAuthResetPassword,
-  IChangePassword,
-} from "../../../types/auth";
 import { User } from "../user/user.model";
-import cryptoToken from "../../../util/cryptoToken";
 import { ResetToken } from "../resetToken/resetToken.model";
 import generateOTP from "../../../util/generateOTP";
 import { twilioService } from "../twilioService/sendOtpWithVerify";
+import { IAuthResetPassword, IChangePassword } from "../../../types/auth";
+import { emailTemplate } from "../../../shared/emailTemplate";
+import { emailHelper } from "../../../helpers/emailHelper";
+
+/* ================= NORMALIZER ================= */
+const normalizeIdentifier = (value: string) => value.trim().toLowerCase();
+
+/* ================= FIND USER (HYBRID) ================= */
+const findUserByIdentifier = (identifier: string, selectPassword = false) => {
+  const id = identifier.trim().toLowerCase();
+
+  const query = id.includes("@")
+    ? User.findOne({ email: id })
+    : User.findOne({ phone: id });
+
+  if (selectPassword) {
+    query.select("+password");
+  }
+
+  return query;
+};
+
+/* ================= LOGIN ================= */
 const loginUserFromDB = async (payload: {
-  phone: string;
-  countryCode: string;
+  identifier: string;
   password: string;
 }) => {
-  const { phone, countryCode, password } = payload;
+  const { identifier, password } = payload;
 
-  //  normalize
-  const normalizedPhone = phone.trim();
-  const normalizedCode = countryCode.trim();
+  const user = await findUserByIdentifier(identifier).select("+password");
 
-  //  find user by phone + countryCode
-  const user = await User.findOne({
-    phone: normalizedPhone,
-    countryCode: normalizedCode,
-  }).select("+password");
-
-  if (!user) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
-  }
+  if (!user) throw new ApiError(400, "User doesn't exist");
 
   if (!user.verified) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Please verify your account first"
-    );
+    throw new ApiError(400, "Please verify your account first");
   }
 
-  const isMatch = await User.isMatchPassword(
-    password,
-    user.password
-  );
+  const isMatch = await bcrypt.compare(password, user.password);
 
-  if (!isMatch) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Password is incorrect"
-    );
-  }
+  if (!isMatch) throw new ApiError(400, "Invalid credentials");
 
-  const accessToken = jwtHelper.createToken(
+  const token = jwtHelper.createToken(
     {
       id: user._id,
       role: user.role,
+      email: user.email,
       phone: user.phone,
-      countryCode: user.countryCode,
     },
     config.jwt.jwt_secret as Secret,
     config.jwt.jwt_expire_in as string
   );
 
-  // never return password
   user.password = undefined as any;
 
-  return {
-    token: accessToken,
-    user,
-  };
+  return { token, user };
 };
 
-// ========================== forget password ===========================
-const forgetPasswordToDB = async (payload: {
-  phone: string;
-  countryCode: string;
-}) => {
-  const { phone, countryCode } = payload;
-
-  // normalize
-  const normalizedPhone = phone.trim();
-  const normalizedCode = countryCode.trim();
-
-  //  find user
-  const user = await User.findOne({
-    phone: normalizedPhone,
-    countryCode: normalizedCode,
-  });
+/* ================= FORGET PASSWORD ================= */
+const forgetPasswordToDB = async (identifier: string) => {
+  const user = await findUserByIdentifier(identifier);
 
   if (!user) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+    throw new ApiError(400, "User not found");
   }
 
-  //  optional: block unverified users
-  if (!user.verified) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Please verify your account first"
-    );
-  }
-
-  //  generate OTP
   const otp = generateOTP();
 
-  //  send OTP via SMS (Twilio or any service)
-  await twilioService.sendOTPWithVerify(normalizedPhone, normalizedCode);
-
-  //  save OTP in DB (fallback verification)
-  const authentication = {
+  // save OTP in DB (common for both email & phone)
+  user.authentication = {
     oneTimeCode: otp,
-    expireAt: new Date(Date.now() + 3 * 60000), // 3 minutes
+    expireAt: new Date(Date.now() + 3 * 60000),
     isResetPassword: true,
-  };
+  } as any;
 
-  await User.findByIdAndUpdate(user._id, {
-    $set: { authentication },
-  });
+  await user.save();
+
+  /* ================= EMAIL FLOW ================= */
+  if (user.email && identifier.includes("@")) {
+    const value = {
+      otp,
+      email: user.email,
+    };
+
+    const emailData = emailTemplate.resetPassword(value);
+
+    await emailHelper.sendEmail({
+      to: user.email,
+      subject: emailData.subject,
+      html: emailData.html,
+    });
+  }
+
+  /* ================= PHONE FLOW ================= */
+  else {
+    if (!user.countryCode) {
+      throw new ApiError(400, "Country code missing for user");
+    }
+
+    await twilioService.sendOTPWithVerify(
+      user.phone,
+      user.countryCode
+    );
+  }
 
   return {
     message: "OTP sent successfully",
   };
 };
 
-// ======================================= verify phone otp============================
-const verifyPhoneToDB = async (payload: {
-  phone: string;
+// ================= VERIFY OTP =================
+const verifyOtpToDB = async (payload: {
+  identifier: string;
   code: string;
-  countryCode: string;
 }) => {
-  const { phone, code, countryCode } = payload;
-
-  const normalizedPhone = phone.trim();
-  const normalizedCode = countryCode.trim();
-
-  //  find user properly (phone + countryCode)
-  const user = await User.findOne({
-    phone: normalizedPhone,
-    countryCode: normalizedCode,
-  }).select("+authentication");
-
-  if (!user) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User not found");
-  }
-
-  //  verify OTP (Twilio)
-  const isApproved = await twilioService.verifyOTP(
-    normalizedPhone,
-    code,
-    normalizedCode
+  const user = await findUserByIdentifier(payload.identifier).select(
+    "+authentication"
   );
 
-  if (!isApproved) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid or expired OTP");
+  if (!user) {
+    throw new ApiError(400, "User not found");
   }
 
-  //  CASE 1: Phone verification (signup)
-  if (!user.verified) {
-    user.verified = true;
+  /* ================= EMAIL OTP FLOW ================= */
+  if (user.email && payload.identifier.includes("@")) {
+    const isValid =
+      user.authentication?.oneTimeCode === Number(payload.code) &&
+      user.authentication?.expireAt &&
+      new Date(user.authentication.expireAt) > new Date();
 
-    // clear auth data
+    if (!isValid) {
+      throw new ApiError(400, "Invalid or expired OTP");
+    }
+
     user.authentication = undefined as any;
-
     await user.save();
 
-    const token = jwtHelper.createToken(
-      {
-        id: user._id,
-        role: user.role,
-        phone: user.phone,
-        countryCode: user.countryCode,
-      },
-      config.jwt.jwt_secret as Secret,
-      config.jwt.jwt_expire_in as string
-    );
-
     return {
-      message: "Phone verified successfully",
-      token,
-      user,
+      message: "Email verified successfully",
     };
   }
 
-  // CASE 2: Forgot password flow
-  const resetToken = cryptoToken();
+  /* ================= PHONE OTP FLOW ================= */
+  if (!user.countryCode) {
+    throw new ApiError(400, "Country code missing for user");
+  }
 
-  await ResetToken.create({
-    user: user._id,
-    token: resetToken,
-    expireAt: new Date(Date.now() + 5 * 60 * 1000),
-  });
+  const isApproved = await twilioService.verifyOTP(
+    user.phone,
+    payload.code,
+    user.countryCode
+  );
 
-  // clear OTP data
-  user.authentication = {
-    isResetPassword: true,
-    oneTimeCode: null,
-    expireAt: null,
-  } as any;
+  if (!isApproved) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  user.verified = true;
+  user.authentication = undefined as any;
 
   await user.save();
 
   return {
-    message: "OTP verified. Use reset token to change password",
-    resetToken,
+    message: "Phone verified successfully",
   };
 };
 
+/* ================= RESET PASSWORD ================= */
 const resetPasswordToDB = async (
   token: string,
   payload: IAuthResetPassword
 ) => {
   const { newPassword, confirmPassword } = payload;
 
-  // check token existence
   const isExistToken = await ResetToken.isExistToken(token);
-  if (!isExistToken) {
-    throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid reset token");
-  }
+  if (!isExistToken) throw new ApiError(401, "Invalid token");
 
-  //  check token expiry
   const isValid = await ResetToken.isExpireToken(token);
-  if (!isValid) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Token expired, please request again"
-    );
-  }
+  if (!isValid) throw new ApiError(400, "Token expired");
 
-  //  find user
-  const user = await User.findById(isExistToken.user).select("+authentication");
-
-  if (!user) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User not found");
-  }
-
-  // permission check (must come from forgot password flow)
-  if (!user.authentication?.isResetPassword) {
-    throw new ApiError(
-      StatusCodes.UNAUTHORIZED,
-      "Reset permission denied. Please request forgot password again"
-    );
-  }
-
-  // password match check
-  if (newPassword !== confirmPassword) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Passwords do not match"
-    );
-  }
-
-  // optional: prevent same password reuse
-  const isSamePassword = await User.isMatchPassword(
-    newPassword,
-    user.password as string
+  const user = await User.findById(isExistToken.user).select(
+    "+authentication +password"
   );
 
-  if (isSamePassword) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "New password must be different from old password"
-    );
+  if (!user) throw new ApiError(400, "User not found");
+
+  if (!user.authentication?.isResetPassword) {
+    throw new ApiError(401, "Invalid reset request");
   }
 
-  //  hash password
-  const hashedPassword = await bcrypt.hash(
+  if (newPassword !== confirmPassword) {
+    throw new ApiError(400, "Password mismatch");
+  }
+
+  const isSame = await bcrypt.compare(newPassword, user.password);
+
+  if (isSame) {
+    throw new ApiError(400, "Cannot reuse old password");
+  }
+
+  user.password = await bcrypt.hash(
     newPassword,
     Number(config.bcrypt_salt_rounds)
   );
 
-  // update user
-  user.password = hashedPassword;
   user.authentication = undefined as any;
 
   await user.save();
 
-  // 🔹 delete used token (VERY IMPORTANT)
   await ResetToken.findOneAndDelete({ token });
 
-  return {
-    message: "Password reset successfully",
-  };
+  return { message: "Password reset successful" };
 };
 
+/* ================= CHANGE PASSWORD ================= */
 const changePasswordToDB = async (
   user: JwtPayload,
   payload: IChangePassword
 ) => {
-  const { currentPassword, newPassword, confirmPassword } = payload;
+  const dbUser = await User.findById(user.id).select("+password");
 
-  // find user
-  const isExistUser = await User.findById(user.id).select("+password");
+  if (!dbUser) throw new ApiError(400, "User not found");
 
-  if (!isExistUser) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
-  }
-
-  //  current password required
-  if (!currentPassword) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Current password is required"
-    );
-  }
-
-  //  match current password
-  const isMatch = await User.isMatchPassword(
-    currentPassword,
-    isExistUser.password
+  const isMatch = await bcrypt.compare(
+    payload.currentPassword,
+    dbUser.password
   );
 
-  if (!isMatch) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Password is incorrect");
+  if (!isMatch) throw new ApiError(400, "Wrong password");
+
+  if (payload.currentPassword === payload.newPassword) {
+    throw new ApiError(400, "New password must be different");
   }
 
-  //  new vs current
-  if (currentPassword === newPassword) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "New password must be different from current password"
-    );
+  if (payload.newPassword !== payload.confirmPassword) {
+    throw new ApiError(400, "Password mismatch");
   }
 
-  //  confirm password check
-  if (newPassword !== confirmPassword) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Passwords do not match"
-    );
-  }
-
-  //  optional: prevent reuse (extra safe)
-  const isSamePassword = await User.isMatchPassword(
-    newPassword,
-    isExistUser.password
+  dbUser.password = await bcrypt.hash(
+    payload.newPassword,
+    Number(config.bcrypt_salt_rounds)
   );
 
-  if (isSamePassword) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "You cannot reuse your old password"
-    );
-  }
+  await dbUser.save();
 
-  //  set new password (IMPORTANT: use save to trigger pre hook)
-  isExistUser.password = newPassword;
-
-  await isExistUser.save();
-
-  return {
-    message: "Password changed successfully",
-  };
+  return { message: "Password changed successfully" };
 };
 
+/* ================= REFRESH TOKEN ================= */
 const newAccessTokenToUser = async (refreshToken: string) => {
-  // check token
-  if (!refreshToken) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Refresh token is required!");
-  }
+  if (!refreshToken) throw new ApiError(400, "Token required");
 
-  let decoded;
+  const decoded = jwtHelper.verifyToken(
+    refreshToken,
+    config.jwt.jwtRefreshSecret as Secret
+  );
 
-  try {
-    decoded = jwtHelper.verifyToken(
-      refreshToken,
-      config.jwt.jwtRefreshSecret as Secret
-    );
-  } catch (error) {
-    throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid or expired token");
-  }
+  const user = await User.findById(decoded.id);
 
-  //  find user
-  const user = await User.findById(decoded?.id);
+  if (!user) throw new ApiError(401, "Unauthorized");
 
-  if (!user) {
-    throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized access");
-  }
-
-  //  optional: block inactive users
-  if (user.status !== "ACTIVE") {
-    throw new ApiError(StatusCodes.UNAUTHORIZED, "User is not active");
-  }
-
-  //  create new access token phone countryCode payload
   const accessToken = jwtHelper.createToken(
     {
       id: user._id,
       role: user.role,
       phone: user.phone,
-      countryCode: user.countryCode,
+      email: user.email,
     },
     config.jwt.jwt_secret as Secret,
     config.jwt.jwt_expire_in as string
@@ -398,116 +281,87 @@ const newAccessTokenToUser = async (refreshToken: string) => {
   return { accessToken };
 };
 
-// ==================resend otp phone =======================
-const resendVerificationOtpToDB = async (payload: {
-  phone: string;
-  countryCode: string;
+/* ================= RESEND OTP ================= */
+const resendOtpToDB = async (payload: {
+  identifier: string;
 }) => {
-  const { phone, countryCode } = payload;
-
-  const normalizedPhone = phone.trim();
-  const normalizedCode = countryCode.trim();
-
-  // find user by phone
-  const user = await User.findOne({
-    phone: normalizedPhone,
-    countryCode: normalizedCode,
-  }).select("+authentication");
+  const user = await findUserByIdentifier(payload.identifier);
 
   if (!user) {
-    throw new ApiError(
-      StatusCodes.NOT_FOUND,
-      "User does not exist!"
-    );
+    throw new ApiError(404, "User not found");
   }
 
-  //  already verified check
-  if (user.verified) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "User is already verified!"
-    );
-  }
-
-  //  generate OTP
   const otp = generateOTP();
 
-  //  update authentication
+  // save OTP in DB (common for both email & phone)
   user.authentication = {
     oneTimeCode: otp,
-    expireAt: new Date(Date.now() + 3 * 60 * 1000),
+    expireAt: new Date(Date.now() + 3 * 60000),
   } as any;
 
   await user.save();
 
-  //  send OTP via SMS
+  /* ================= EMAIL FLOW ================= */
+  if (user.email && payload.identifier.includes("@")) {
+    const value = {
+      otp,
+      email: user.email,
+    };
+
+    const emailData = emailTemplate.resetPassword(value);
+
+    await emailHelper.sendEmail({
+      to: user.email,
+      subject: emailData.subject,
+      html: emailData.html,
+    });
+
+    return {
+      message: "OTP sent to email successfully",
+    };
+  }
+
+  /* ================= PHONE FLOW ================= */
+  if (!user.countryCode) {
+    throw new ApiError(400, "Country code missing for user");
+  }
+
   await twilioService.sendOTPWithVerify(
-    normalizedPhone,
-    normalizedCode,
+    user.phone,
+    user.countryCode
   );
 
   return {
-    message: "OTP sent successfully",
+    message: "OTP sent to phone successfully",
   };
 };
 
+/* ================= DELETE USER ================= */
 const deleteUserFromDB = async (
   user: JwtPayload,
   password: string
 ) => {
-  //  find user
-  const isExistUser = await User.findById(user.id).select("+password");
+  const dbUser = await User.findById(user.id).select("+password");
 
-  if (!isExistUser) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
-  }
+  if (!dbUser) throw new ApiError(400, "User not found");
 
-  //  password mandatory (IMPORTANT FIX)
-  if (!password) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Password is required to delete account"
-    );
-  }
+  const isMatch = await bcrypt.compare(password, dbUser.password);
 
-  //  check password
-  const isMatch = await User.isMatchPassword(
-    password,
-    isExistUser.password!
-  );
+  if (!isMatch) throw new ApiError(400, "Wrong password");
 
-  if (!isMatch) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Password is incorrect"
-    );
-  }
-
-  //  optional safety check
-  if (!isExistUser.verified) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Unverified account cannot be deleted"
-    );
-  }
-
-  //  delete user (hard delete)
   await User.findByIdAndDelete(user.id);
 
-  return {
-    message: "User deleted successfully",
-  };
+  return { message: "Account deleted successfully" };
 };
 
-
-
+/* ================= EXPORT ================= */
 export const AuthService = {
   loginUserFromDB,
   forgetPasswordToDB,
+  verifyOtpToDB,
   resetPasswordToDB,
-  verifyPhoneToDB,
   changePasswordToDB,
   newAccessTokenToUser,
-  resendVerificationOtpToDB,
+  resendOtpToDB,
   deleteUserFromDB,
 };
