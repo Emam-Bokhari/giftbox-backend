@@ -1,8 +1,9 @@
 import { Schema } from "mongoose"
+import { LOTTERY_PARTICIPANT_STATUS } from "./participant.constant";
 
 export type TLotteryParticipant = {
     lotteryId: Schema.Types.ObjectId;
     userId: Schema.Types.ObjectId;
     paymentProof: string;
-    status: "PENDING" | "APPROVED" | "REJECTED";
+    status: LOTTERY_PARTICIPANT_STATUS;
 }
