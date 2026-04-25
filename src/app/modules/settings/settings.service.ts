@@ -43,6 +43,17 @@ const createOrUpdateSettingsToDB = async (payload: TSettings) => {
   return result;
 };
 
+const getSettingsFromDB = async () => {
+  const settings = await Settings.findOne();
+
+  if (!settings) {
+    throw new ApiError(404, "Settings not found");
+  }
+
+  return settings;
+};
+
 export const SettingsServices={
     createOrUpdateSettingsToDB,
+    getSettingsFromDB,
 }
