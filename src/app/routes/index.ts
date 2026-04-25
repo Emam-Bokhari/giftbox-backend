@@ -11,6 +11,7 @@ import { SupportRoutes } from "../modules/support/support.route";
 import { BannerRoutes } from "../modules/banner/banner.route";
 import { LotteryRoutes } from "../modules/lottery/lottery.route";
 import { SettingsRoutes } from "../modules/settings/settings.route";
+import { LotteryParticipantRoutes } from "../modules/participant/participant.route";
 
 const router = express.Router();
 
@@ -28,6 +29,10 @@ const apiRoutes = [
   {
     path: "/lottery",
     route: LotteryRoutes,
+  },
+  {
+    path: "/participants",
+    route: LotteryParticipantRoutes,
   },
   {
     path: "/rules",

@@ -27,6 +27,9 @@ const fileUploadHandler = () => {
         case "image":
           uploadDir = path.join(baseUploadDir, "image");
           break;
+        case "paymentProof":
+          uploadDir = path.join(baseUploadDir, "paymentProof");
+          break;
 
         case "seatingPlan":
           uploadDir = path.join(baseUploadDir, "seatingPlan");
@@ -125,6 +128,7 @@ const fileUploadHandler = () => {
   const filterFilter = (req: Request, file: any, cb: FileFilterCallback) => {
     if (
       file.fieldname === "image" ||
+      file.fieldname === "paymentProof" ||
       file.fieldname === "profileImage" ||
       file.fieldname === "childImage" ||
       file.fieldname === "images" ||
@@ -254,6 +258,7 @@ const fileUploadHandler = () => {
     fileFilter: filterFilter,
   }).fields([
     { name: "image", maxCount: 14 },
+    { name: "paymentProof", maxCount: 1 },
     { name: "profileImage", maxCount: 1 },
     { name: "childImage", maxCount: 1 },
     { name: "images", maxCount: 14 },
