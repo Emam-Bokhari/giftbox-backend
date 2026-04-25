@@ -124,7 +124,18 @@ const getActiveLotteryFromDB = async () => {
   return activeLottery;
 };
 
+const getLotteryByIdFromDB = async (id: string) => {
+  const lottery = await Lottery.findById(id);
+
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
+
+  return lottery;
+};
+
 export const LotteryServices = {
     createLotteryToDB,
     getActiveLotteryFromDB,
+    getLotteryByIdFromDB,
 }
