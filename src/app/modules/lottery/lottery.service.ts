@@ -1,5 +1,6 @@
 import ApiError from "../../../errors/ApiErrors";
 import { generateTicketId } from "../../../helpers/generateCustomId";
+import QueryBuilder from "../../builder/queryBuilder";
 import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant";
 import { TLottery } from "./lottery.interface";
 import { Lottery } from "./lottery.model";
@@ -134,8 +135,29 @@ const getLotteryByIdFromDB = async (id: string) => {
   return lottery;
 };
 
+const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
+  const lotteryQuery = new QueryBuilder(
+    Lottery.find(),
+    query
+  )
+    .search(["title", "description", "ticketNumber"])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const data = await lotteryQuery.modelQuery;
+  const meta = await lotteryQuery.countTotal();
+
+  return {
+    meta,
+    data,
+  };
+};
+
 export const LotteryServices = {
     createLotteryToDB,
     getActiveLotteryFromDB,
     getLotteryByIdFromDB,
+    getAllLotteriesFromDB,
 }
