@@ -38,47 +38,47 @@ class QueryBuilder<T> {
   }
 
   // FILTER (fully generic)
-  filter() {
-    const queryObj = { ...this.query };
+ filter() {
+  const queryObj = { ...this.query };
 
-    const excludeFields = ["searchTerm", "sort", "limit", "page", "fields"];
+  const excludeFields = [
+    "searchTerm",
+    "sort",
+    "limit",
+    "page",
+    "fields",
+  ];
 
-    excludeFields.forEach((el) => delete queryObj[el]);
+  excludeFields.forEach((el) => delete queryObj[el]);
 
-    // remove empty values
-    Object.keys(queryObj).forEach((key) => {
-      if (
-        queryObj[key] === undefined ||
-        queryObj[key] === null ||
-        queryObj[key] === ""
-      ) {
-        delete queryObj[key];
-      }
-    });
-
-    // ONLY valid lottery statuses allowed
-    const validStatuses = [
-      "DRAFT",
-      "SCHEDULED",
-      "ACTIVE",
-      "ENDED",
-      "DRAWN",
-    ];
-
-    if (queryObj.status) {
-      if (!validStatuses.includes(queryObj.status as string)) {
-        delete queryObj.status; // ignore invalid status
-      }
+  // remove empty values
+  Object.keys(queryObj).forEach((key) => {
+    if (
+      queryObj[key] === undefined ||
+      queryObj[key] === null ||
+      queryObj[key] === ""
+    ) {
+      delete queryObj[key];
     }
+  });
 
-    if (Object.keys(queryObj).length > 0) {
-      this.modelQuery = this.modelQuery.find(
-        queryObj as FilterQuery<T>
-      );
+  // ✅ ONLY allow valid fields (important for security)
+  const allowedFilters = ["status", "mode"];
+
+  const finalFilter: any = {};
+
+  allowedFilters.forEach((key) => {
+    if (queryObj[key]) {
+      finalFilter[key] = queryObj[key];
     }
+  });
 
-    return this;
+  if (Object.keys(finalFilter).length > 0) {
+    this.modelQuery = this.modelQuery.find(finalFilter);
   }
+
+  return this;
+}
 
   //  SORT
   sort() {
