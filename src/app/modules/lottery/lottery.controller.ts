@@ -45,6 +45,8 @@ const getAllLotteries = catchAsync(async (req, res) => {
     })
 })
 
+
+
 export const LotteryControllers = {
     createLottery,
     getActiveLottery,

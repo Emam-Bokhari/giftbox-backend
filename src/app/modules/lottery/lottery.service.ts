@@ -155,9 +155,24 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
   };
 };
 
+const getSingleLotteryFromDB = async (id: string) => {
+  if (!id) {
+    throw new ApiError(400, "Lottery ID is required");
+  }
+
+  const lottery = await Lottery.findById(id);
+
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
+
+  return lottery;
+};
+
 export const LotteryServices = {
     createLotteryToDB,
     getActiveLotteryFromDB,
     getLotteryByIdFromDB,
     getAllLotteriesFromDB,
+    getSingleLotteryFromDB,
 }
