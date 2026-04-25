@@ -169,10 +169,40 @@ const getSingleLotteryFromDB = async (id: string) => {
   return lottery;
 };
 
+const deleteLotteryFromDB = async (id: string) => {
+  if (!id) {
+    throw new ApiError(400, "Lottery ID is required");
+  }
+
+  const lottery = await Lottery.findById(id);
+
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
+
+  //  Safety rule (recommended)
+  if (
+    lottery.status === LOTTERY_STATUS.ACTIVE ||
+    lottery.status === LOTTERY_STATUS.SCHEDULED
+  ) {
+    throw new ApiError(
+      400,
+      "Active or scheduled lottery cannot be deleted"
+    );
+  }
+
+  await Lottery.findByIdAndDelete(id);
+
+  return {
+    message: "Lottery deleted successfully",
+  };
+};
+
 export const LotteryServices = {
     createLotteryToDB,
     getActiveLotteryFromDB,
     getLotteryByIdFromDB,
     getAllLotteriesFromDB,
     getSingleLotteryFromDB,
+    deleteLotteryFromDB,
 }
