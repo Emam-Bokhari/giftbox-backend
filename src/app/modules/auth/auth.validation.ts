@@ -75,13 +75,12 @@
 
 import { z } from "zod";
 
-/* ================= IDENTIFIER ================= */
 const identifierSchema = z
   .string({ required_error: "Email or phone is required" })
   .min(3)
   .max(100);
 
-/* ================= PASSWORD ================= */
+
 const passwordSchema = z
   .string({ required_error: "Password is required" })
   .min(6)
@@ -90,7 +89,7 @@ const passwordSchema = z
   .regex(/[a-z]/, "Must contain lowercase letter")
   .regex(/[0-9]/, "Must contain number");
 
-/* ================= OTP VERIFY ================= */
+
 const createVerifyOtpZodSchema = z.object({
   body: z.object({
     identifier: identifierSchema,
@@ -102,7 +101,7 @@ const createVerifyOtpZodSchema = z.object({
   }),
 });
 
-/* ================= LOGIN ================= */
+
 const createLoginZodSchema = z.object({
   body: z.object({
     identifier: identifierSchema,
@@ -114,14 +113,14 @@ const createLoginZodSchema = z.object({
   }),
 });
 
-/* ================= FORGET PASSWORD ================= */
+
 const createForgetPasswordZodSchema = z.object({
   body: z.object({
     identifier: identifierSchema,
   }),
 });
 
-/* ================= RESET PASSWORD ================= */
+
 const createResetPasswordZodSchema = z.object({
   body: z
     .object({
@@ -134,7 +133,7 @@ const createResetPasswordZodSchema = z.object({
     }),
 });
 
-/* ================= CHANGE PASSWORD ================= */
+
 const createChangePasswordZodSchema = z.object({
   body: z
     .object({
@@ -148,7 +147,7 @@ const createChangePasswordZodSchema = z.object({
     }),
 });
 
-/* ================= RESEND OTP ================= */
+
 const createResendOtpZodSchema = z.object({
   body: z.object({
     identifier: identifierSchema,

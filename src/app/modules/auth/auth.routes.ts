@@ -83,34 +83,32 @@ import rateLimit from "express-rate-limit";
 
 const router = express.Router();
 
-/* ================= RATE LIMIT (OTP ABUSE PROTECTION) ================= */
+
 const otpLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 min
   max: 3,
   message: "Too many OTP requests. Please try again later.",
 });
 
-/* ================= LOGIN ================= */
 router.post(
   "/login",
   validateRequest(AuthValidation.createLoginZodSchema),
   AuthController.loginUser
 );
 
-/* ================= FORGET PASSWORD ================= */
+
 router.post(
   "/forget-password",
   validateRequest(AuthValidation.createForgetPasswordZodSchema),
   AuthController.forgetPassword
 );
 
-/* ================= RESET PASSWORD ================= */
+
 router.post(
   "/reset-password",
   AuthController.resetPassword
 );
 
-/* ================= CHANGE PASSWORD ================= */
 router.post(
   "/change-password",
   auth(
@@ -122,14 +120,14 @@ router.post(
   AuthController.changePassword
 );
 
-/* ================= VERIFY ACCOUNT (OTP OPTIONAL FLOW) ================= */
+
 router.post(
   "/verify-account",
   validateRequest(AuthValidation.createVerifyOtpZodSchema),
   AuthController.verifyOtp
 );
 
-/* ================= RESEND OTP ================= */
+
 router.post(
   "/resend-otp",
   otpLimiter,
@@ -137,13 +135,13 @@ router.post(
   AuthController.resendOtp
 );
 
-/* ================= REFRESH TOKEN ================= */
+
 router.post(
   "/refresh-token",
   AuthController.newAccessToken
 );
 
-/* ================= DELETE ACCOUNT ================= */
+
 router.delete(
   "/delete-account",
   auth(

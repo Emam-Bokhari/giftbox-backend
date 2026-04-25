@@ -130,7 +130,7 @@ import { JwtPayload } from "jsonwebtoken";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 
-/* ================= LOGIN ================= */
+
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.loginUserFromDB(req.body);
 
@@ -142,7 +142,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/* ================= FORGET PASSWORD ================= */
+
 const forgetPassword = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.forgetPasswordToDB(req.body.identifier);
 
@@ -154,7 +154,7 @@ const forgetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/* ================= RESET PASSWORD ================= */
+
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const token = req.headers.resettoken as string;
 
@@ -168,7 +168,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/* ================= CHANGE PASSWORD ================= */
+
 const changePassword = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.changePasswordToDB(
     req.user as JwtPayload,
@@ -183,7 +183,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/* ================= NEW ACCESS TOKEN ================= */
+
 const newAccessToken = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.newAccessTokenToUser(req.body.token);
 
@@ -195,7 +195,7 @@ const newAccessToken = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/* ================= RESEND OTP ================= */
+
 const resendOtp = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.resendOtpToDB(req.body);
 
@@ -207,7 +207,6 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/* ================= DELETE USER ================= */
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.deleteUserFromDB(
     req.user as JwtPayload,
@@ -222,7 +221,7 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/* ================= VERIFY OTP (OPTIONAL FLOW) ================= */
+
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.verifyOtpToDB(req.body);
 
@@ -234,7 +233,7 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-/* ================= EXPORT ================= */
+
 export const AuthController = {
   loginUser,
   forgetPassword,
