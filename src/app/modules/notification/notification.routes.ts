@@ -7,17 +7,17 @@ const router = express.Router();
 router
   .route("/")
   .get(
-    auth(USER_ROLES.USER, USER_ROLES.HOST),
+    auth(USER_ROLES.USER),
     NotificationController.getNotificationFromDB,
   )
   .patch(
-    auth(USER_ROLES.USER, USER_ROLES.HOST),
+    auth(USER_ROLES.USER),
     NotificationController.readNotification,
   );
 
 router.get(
   "/recent",
-  auth(USER_ROLES.USER, USER_ROLES.HOST),
+  auth(USER_ROLES.USER),
   NotificationController.getRecentActivities,
 );
 
@@ -41,13 +41,13 @@ router.get(
 // user routes
 router.get(
   "/:id",
-  auth(USER_ROLES.USER, USER_ROLES.HOST),
+  auth(USER_ROLES.USER),
   NotificationController.getSingleNotification,
 );
 
 router.patch(
   "/:id/read",
-  auth(USER_ROLES.USER, USER_ROLES.HOST),
+  auth(USER_ROLES.USER),
   NotificationController.readSingleNotification,
 );
 

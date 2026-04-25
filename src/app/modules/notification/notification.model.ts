@@ -1,6 +1,6 @@
 import { model, Schema } from "mongoose";
 import { INotification, NotificationModel } from "./notification.interface";
-import { NOTIFICATION_TYPE } from "./notification.constant";
+import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "./notification.constant";
 
 const notificationSchema = new Schema<INotification, NotificationModel>(
   {
@@ -29,7 +29,7 @@ const notificationSchema = new Schema<INotification, NotificationModel>(
     referenceModel: {
       type: String,
       required: false,
-      enum: ["Booking", "Car", "Review", "User"],
+      enum: Object.values(NOTIFICATION_REFERENCE_MODEL),
     },
     read: {
       type: Boolean,
