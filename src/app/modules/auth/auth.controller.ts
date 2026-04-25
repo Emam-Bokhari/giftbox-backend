@@ -163,7 +163,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: result.message,
+    message: "Password reset successfully",
     data: result,
   });
 });
@@ -230,7 +230,7 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: result.message,
-    data: null,
+    data: result,
   });
 });
 

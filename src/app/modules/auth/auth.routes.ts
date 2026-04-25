@@ -107,7 +107,6 @@ router.post(
 /* ================= RESET PASSWORD ================= */
 router.post(
   "/reset-password",
-  validateRequest(AuthValidation.createResetPasswordZodSchema),
   AuthController.resetPassword
 );
 

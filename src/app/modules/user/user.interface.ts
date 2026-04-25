@@ -76,7 +76,6 @@ export type IUser = {
 
   /* ================= VERIFICATION ================= */
   verified: boolean;
-  verificationStatus?: "UNVERIFIED" | "PENDING" | "VERIFIED";
 
   status?: STATUS;
 

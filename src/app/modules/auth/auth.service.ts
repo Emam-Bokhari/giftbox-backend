@@ -468,6 +468,54 @@ const forgetPasswordToDB = async (identifier: string) => {
 };
 
 /* ================= VERIFY OTP (OPTIONAL FLOW) ================= */
+// const verifyOtpToDB = async (payload: {
+//   identifier: string;
+//   code: string;
+// }) => {
+//   const user = await findUserByIdentifier(payload.identifier).select(
+//     "+authentication"
+//   );
+
+//   if (!user) throw new ApiError(400, "User not found");
+
+//   // EMAIL FLOW
+//   if (user.email && payload.identifier.includes("@")) {
+//     const isValid =
+//       user.authentication?.oneTimeCode === Number(payload.code) &&
+//       user.authentication?.expireAt &&
+//       new Date(user.authentication.expireAt) > new Date();
+
+//     if (!isValid) throw new ApiError(400, "Invalid or expired OTP");
+
+//     user.verified = true;
+//     user.authentication = undefined as any;
+
+//     await user.save();
+
+//     return { message: "Email verified successfully" };
+//   }
+
+//   // PHONE FLOW
+//   if (!user.phone || !user.countryCode) {
+//     throw new ApiError(400, "Phone missing");
+//   }
+
+//   const isApproved = await twilioService.verifyOTP(
+//     user.phone,
+//     payload.code,
+//     user.countryCode
+//   );
+
+//   if (!isApproved) throw new ApiError(400, "Invalid OTP");
+
+//   user.verified = true;
+//   user.authentication = undefined as any;
+
+//   await user.save();
+
+//   return { message: "Phone verified successfully" };
+// };
+
 const verifyOtpToDB = async (payload: {
   identifier: string;
   code: string;
@@ -478,86 +526,166 @@ const verifyOtpToDB = async (payload: {
 
   if (!user) throw new ApiError(400, "User not found");
 
-  // EMAIL FLOW
-  if (user.email && payload.identifier.includes("@")) {
-    const isValid =
-      user.authentication?.oneTimeCode === Number(payload.code) &&
-      user.authentication?.expireAt &&
-      new Date(user.authentication.expireAt) > new Date();
+  const auth = user.authentication;
 
-    if (!isValid) throw new ApiError(400, "Invalid or expired OTP");
+  if (!auth?.oneTimeCode || !auth?.expireAt) {
+    throw new ApiError(400, "OTP not found or already used");
+  }
 
+  if (new Date(auth.expireAt) < new Date()) {
+    throw new ApiError(400, "OTP expired");
+  }
+
+  if (auth.oneTimeCode !== Number(payload.code)) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  /* ================= CASE 1: EMAIL/PHONE VERIFY ================= */
+  if (!user.verified && !auth.isResetPassword) {
     user.verified = true;
-    user.authentication = undefined as any;
 
+    user.authentication = undefined as any;
     await user.save();
 
-    return { message: "Email verified successfully" };
+    const token = jwtHelper.createToken(
+      {
+        id: user._id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+      config.jwt.jwt_secret as Secret,
+      config.jwt.jwt_expire_in as string
+    );
+
+    return {
+      message: "Account verified successfully",
+      token,
+      user,
+    };
   }
 
-  // PHONE FLOW
-  if (!user.phone || !user.countryCode) {
-    throw new ApiError(400, "Phone missing");
-  }
+  /* ================= CASE 2: RESET PASSWORD FLOW ================= */
+  const resetToken = crypto.randomUUID();
 
-  const isApproved = await twilioService.verifyOTP(
-    user.phone,
-    payload.code,
-    user.countryCode
-  );
+  await ResetToken.create({
+    user: user._id,
+    token: resetToken,
+    expireAt: new Date(Date.now() + 5 * 60 * 1000),
+  });
 
-  if (!isApproved) throw new ApiError(400, "Invalid OTP");
-
-  user.verified = true;
-  user.authentication = undefined as any;
+  user.authentication = {
+    isResetPassword: true,
+    oneTimeCode: null,
+    expireAt: null,
+  } as any;
 
   await user.save();
 
-  return { message: "Phone verified successfully" };
+  return {
+    message: "OTP verified. Proceed to reset password",
+    resetToken,
+  };
 };
 
 /* ================= RESET PASSWORD ================= */
+// const resetPasswordToDB = async (
+//   token: string,
+//   payload: IAuthResetPassword
+// ) => {
+//   const { newPassword, confirmPassword } = payload;
+
+//   const isExistToken = await ResetToken.isExistToken(token);
+//   if (!isExistToken) throw new ApiError(401, "Invalid token");
+
+//   const isValid = await ResetToken.isExpireToken(token);
+//   if (!isValid) throw new ApiError(400, "Token expired");
+
+//   const user = await User.findById(isExistToken.user).select(
+//     "+authentication +password"
+//   );
+
+//   if (!user) throw new ApiError(400, "User not found");
+
+//   if (!user.authentication?.isResetPassword) {
+//     throw new ApiError(401, "Invalid reset request");
+//   }
+
+//   if (newPassword !== confirmPassword) {
+//     throw new ApiError(400, "Password mismatch");
+//   }
+
+//   const isSame = await bcrypt.compare(newPassword, user.password);
+//   if (isSame) throw new ApiError(400, "Cannot reuse old password");
+
+//   user.password = await bcrypt.hash(
+//     newPassword,
+//     Number(config.bcrypt_salt_rounds)
+//   );
+
+//   user.authentication = undefined as any;
+
+//   await user.save();
+//   await ResetToken.findOneAndDelete({ token });
+
+//   return { message: "Password reset successful" };
+// };
+
 const resetPasswordToDB = async (
   token: string,
-  payload: IAuthResetPassword
+  payload: IAuthResetPassword,
 ) => {
   const { newPassword, confirmPassword } = payload;
-
+  // isExist token
   const isExistToken = await ResetToken.isExistToken(token);
-  if (!isExistToken) throw new ApiError(401, "Invalid token");
+  if (!isExistToken) {
+    throw new ApiError(401, "You are not authorized");
+  }
 
+  // user permission check
+  const isExistUser = await User.findById(isExistToken.user).select(
+    "+authentication",
+  );
+  console.log("=======", isExistUser);
+  if (!isExistUser?.authentication?.isResetPassword) {
+    throw new ApiError(
+      401,
+      "You don't have permission to change the password. Please click again to 'Forgot Password'",
+    );
+  }
+
+  // validity check
   const isValid = await ResetToken.isExpireToken(token);
-  if (!isValid) throw new ApiError(400, "Token expired");
-
-  const user = await User.findById(isExistToken.user).select(
-    "+authentication +password"
-  );
-
-  if (!user) throw new ApiError(400, "User not found");
-
-  if (!user.authentication?.isResetPassword) {
-    throw new ApiError(401, "Invalid reset request");
+  if (!isValid) {
+    throw new ApiError(
+      400,
+      "Token expired, Please click again to the forget password",
+    );
   }
 
+  // check password
   if (newPassword !== confirmPassword) {
-    throw new ApiError(400, "Password mismatch");
+    throw new ApiError(
+      400,
+      "New password and Confirm password doesn't match!",
+    );
   }
 
-  const isSame = await bcrypt.compare(newPassword, user.password);
-  if (isSame) throw new ApiError(400, "Cannot reuse old password");
-
-  user.password = await bcrypt.hash(
+  const hashPassword = await bcrypt.hash(
     newPassword,
-    Number(config.bcrypt_salt_rounds)
+    Number(config.bcrypt_salt_rounds),
   );
 
-  user.authentication = undefined as any;
+  const updateData = {
+    password: hashPassword,
+    authentication: { isResetPassword: false },
+  };
 
-  await user.save();
-  await ResetToken.findOneAndDelete({ token });
-
-  return { message: "Password reset successful" };
+  await User.findOneAndUpdate({ _id: isExistToken.user }, updateData, {
+    new: true,
+  });
 };
+
 
 /* ================= CHANGE PASSWORD ================= */
 const changePasswordToDB = async (
