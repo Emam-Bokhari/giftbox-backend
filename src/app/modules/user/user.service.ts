@@ -11,7 +11,6 @@ import QueryBuilder from "../../builder/queryBuilder";
 import generateOTP from "../../../util/generateOTP";
 import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
-import { Types } from "mongoose";
 import bcrypt from "bcrypt";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
 import { NOTIFICATION_TYPE } from "../notification/notification.constant";
@@ -96,8 +95,6 @@ const deleteAdminFromDB = async (id: any) => {
 
   return isExistAdmin;
 };
-
-
 
 
 // --- USER SERVICES ---
