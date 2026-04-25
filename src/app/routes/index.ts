@@ -10,6 +10,7 @@ import { FcmTokenRoutes } from "../modules/fcmToken/fcmToken.route";
 import { SupportRoutes } from "../modules/support/support.route";
 import { BannerRoutes } from "../modules/banner/banner.route";
 import { LotteryRoutes } from "../modules/lottery/lottery.route";
+import { SettingsRoutes } from "../modules/settings/settings.route";
 
 const router = express.Router();
 
@@ -59,6 +60,10 @@ const apiRoutes = [
   {
     path: "/fcmTokens",
     route: FcmTokenRoutes,
+  },
+  {
+    path: "/settings",
+    route: SettingsRoutes,
   },
 ];
 
