@@ -15,7 +15,9 @@ router.route("/")
         fileUploadHandler(),
         parseAllFilesData({ fieldName: FOLDER_NAMES.BANNER, forceSingle: true }),
         validateRequest(LotteryValidationSchema.createLotteryZodSchema),
-        LotteryControllers.createLottery);
+        LotteryControllers.createLottery)
+    .get(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN,),
+        LotteryControllers.getAllLotteries);
 
 router.route("/active")
     .get(auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN,),
