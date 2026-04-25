@@ -169,6 +169,70 @@ const getSingleLotteryFromDB = async (id: string) => {
   return lottery;
 };
 
+const updateLotteryIntoDB = async (
+  id: string,
+  payload: any
+) => {
+  if (!id) {
+    throw new ApiError(400, "Lottery ID is required");
+  }
+
+  const lottery = await Lottery.findById(id);
+
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
+
+  // Restrict update for DRAWN lotteries
+  if (lottery.status === LOTTERY_STATUS.DRAWN) {
+    throw new ApiError(
+      400,
+      "Cannot update a drawn lottery"
+    );
+  }
+
+  //  If ACTIVE → restrict critical fields
+  if (lottery.status === LOTTERY_STATUS.ACTIVE) {
+    const restrictedFields = [
+      "ticketPrice",
+      "currency",
+      "mode",
+      "startAt",
+      "endAt",
+    ];
+
+    restrictedFields.forEach((field) => {
+      if (payload[field]) {
+        throw new ApiError(
+          400,
+          `Cannot update ${field} of an active lottery`
+        );
+      }
+    });
+  }
+
+  // If SCHEDULED → validate dates
+  if (payload.startAt && payload.endAt) {
+    const start = new Date(payload.startAt);
+    const end = new Date(payload.endAt);
+
+    if (start >= end) {
+      throw new ApiError(
+        400,
+        "Start time must be before end time"
+      );
+    }
+  }
+
+  const updatedLottery = await Lottery.findByIdAndUpdate(
+    id,
+    { $set: payload },
+    { new: true, runValidators: true }
+  );
+
+  return updatedLottery;
+}
+
 const deleteLotteryFromDB = async (id: string) => {
   if (!id) {
     throw new ApiError(400, "Lottery ID is required");
@@ -204,5 +268,6 @@ export const LotteryServices = {
     getLotteryByIdFromDB,
     getAllLotteriesFromDB,
     getSingleLotteryFromDB,
+    updateLotteryIntoDB,
     deleteLotteryFromDB,
 }
