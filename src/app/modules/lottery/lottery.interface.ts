@@ -1,4 +1,4 @@
-import { LOTTERY_STATUS } from "./lottery.constant"
+import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant"
 
 export type TLottery = {
     ticketNumber: string;
@@ -8,6 +8,7 @@ export type TLottery = {
     ticketPrice: number
     currency: string
     status: LOTTERY_STATUS
+    mode: LOTTERY_MODE;
     startAt?: Date
     endAt: Date
 }

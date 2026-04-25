@@ -5,3 +5,9 @@ export enum LOTTERY_STATUS {
   ENDED = "ENDED",
   DRAWN = "DRAWN",
 }
+
+export enum LOTTERY_MODE {
+  INSTANT = "INSTANT",
+  SCHEDULE = "SCHEDULE",
+  DRAFT = "DRAFT",
+}

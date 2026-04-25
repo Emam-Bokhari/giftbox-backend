@@ -1,6 +1,6 @@
 import { model, Schema } from "mongoose";
 import { TLottery } from "./lottery.interface";
-import { LOTTERY_STATUS } from "./lottery.constant";
+import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant";
 
 const lotterySchema = new Schema<TLottery>(
     {
@@ -45,6 +45,12 @@ const lotterySchema = new Schema<TLottery>(
             type: String,
             enum: Object.values(LOTTERY_STATUS),
             default: LOTTERY_STATUS.DRAFT,
+        },
+
+        mode: {
+            type: String,
+            enum: Object.values(LOTTERY_MODE),
+            required: true,
         },
 
         startAt: {

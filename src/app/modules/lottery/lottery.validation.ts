@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LOTTERY_STATUS } from "./lottery.constant";
+import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant";
 
 const createLotteryZodSchema = z.object({
     body: z.object({
@@ -37,6 +37,10 @@ const createLotteryZodSchema = z.object({
 
         status: z
             .enum(Object.values(LOTTERY_STATUS) as [string, ...string[]])
+            .optional(),
+
+        mode: z
+            .enum(Object.values(LOTTERY_MODE) as [string, ...string[]])
             .optional(),
 
         startAt: z.coerce.date().optional(),

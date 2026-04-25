@@ -13,7 +13,7 @@ import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 import bcrypt from "bcrypt";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
-import { NOTIFICATION_TYPE } from "../notification/notification.constant";
+import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
 import { twilioService } from "../twilioService/sendOtpWithVerify";
 import { normalizeIdentifier } from "../auth/auth.service";
 
@@ -211,7 +211,7 @@ const createUserToDB = async (payload: any) => {
       receiver: admin._id.toString(),
       type: NOTIFICATION_TYPE.ADMIN,
       referenceId: createUser._id.toString(),
-      referenceModel: "User",
+      referenceModel: NOTIFICATION_REFERENCE_MODEL.USER,
     });
   }
 
