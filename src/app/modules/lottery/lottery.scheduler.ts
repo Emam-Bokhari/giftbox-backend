@@ -12,9 +12,9 @@ export const startLotteryScheduler = () => {
     console.log(`\n⏱️ Cron Tick: ${now.toISOString()}`);
 
     try {
-      // -------------------------------
-      // 🎯 Activate Scheduled Lottery
-      // -------------------------------
+
+      // Activate Scheduled Lottery
+
       const scheduledLotteries = await Lottery.find({
         status: LOTTERY_STATUS.SCHEDULED,
         startAt: { $lte: now },
@@ -44,9 +44,9 @@ export const startLotteryScheduler = () => {
         );
       }
 
-      // -------------------------------
-      // 🛑 End Active Lottery
-      // -------------------------------
+
+      //  end Active Lottery
+
       const activeLotteries = await Lottery.find({
         status: LOTTERY_STATUS.ACTIVE,
         endAt: { $lte: now },

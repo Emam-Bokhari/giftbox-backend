@@ -109,6 +109,22 @@ const createLotteryToDB = async (payload: TLottery) => {
     return lottery;
 };
 
+const getActiveLotteryFromDB = async () => {
+
+  // find active lottery
+
+  const activeLottery = await Lottery.findOne({
+    status: LOTTERY_STATUS.ACTIVE,
+  });
+
+  if (!activeLottery) {
+    throw new ApiError(404, "No active lottery found");
+  }
+
+  return activeLottery;
+};
+
 export const LotteryServices = {
     createLotteryToDB,
+    getActiveLotteryFromDB,
 }
