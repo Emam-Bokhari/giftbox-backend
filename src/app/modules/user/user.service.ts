@@ -13,20 +13,10 @@ import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 import { generateMembershipId } from "../../../helpers/generateYearBasedId";
 import { Types } from "mongoose";
-import { Booking } from "../booking/booking.model";
-import { BOOKING_STATUS } from "../booking/booking.interface";
-import {
-  TRANSACTION_STATUS,
-  TRANSACTION_TYPE,
-} from "../transaction/transaction.interface";
-import { ReviewServices } from "../review/review.service";
-import { REVIEW_TARGET_TYPE } from "../review/review.interface";
-import { Car } from "../car/car.model";
-import { getCarTripCountMap } from "../car/car.utils";
 import bcrypt from "bcrypt";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
 import { NOTIFICATION_TYPE } from "../notification/notification.constant";
-import { Transaction } from "../transaction/transaction.model";
+
 
 // --- ADMIN SERVICES ---
 const createAdminToDB = async (payload: any): Promise<IUser> => {
