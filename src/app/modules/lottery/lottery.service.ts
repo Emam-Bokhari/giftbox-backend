@@ -111,9 +111,6 @@ const createLotteryToDB = async (payload: TLottery) => {
 };
 
 const getActiveLotteryFromDB = async () => {
-
-  // find active lottery
-
   const activeLottery = await Lottery.findOne({
     status: LOTTERY_STATUS.ACTIVE,
   });

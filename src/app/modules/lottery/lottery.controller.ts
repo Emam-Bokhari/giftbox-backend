@@ -67,6 +67,21 @@ const updateLottery = catchAsync(async (req, res) => {
     })
 })
 
+const updateLotteryStatus = catchAsync(async (req, res) => {
+    const {id} = req.params;
+    const {status} = req.body;
+    const result = await LotteryServices.updateLotteryStatusIntoDB(id, status);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Lottery status updated successfully",
+        data: result,
+    })
+})
+
+
+
+
 const deleteLottery = catchAsync(async (req, res) => {
     const {id} = req.params;
     const result = await LotteryServices.deleteLotteryFromDB(id);
@@ -87,5 +102,6 @@ export const LotteryControllers = {
     getAllLotteries,
     getSingleLottery,
     updateLottery,
+    updateLotteryStatus,
     deleteLottery,
 }
