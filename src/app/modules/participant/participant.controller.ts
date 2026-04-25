@@ -18,6 +18,8 @@ const createParticipant = catchAsync(async (req, res) => {
     });
 });
 
+
+
 export const ParticipantControllers = {
     createParticipant,
 }

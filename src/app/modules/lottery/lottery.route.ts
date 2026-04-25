@@ -18,6 +18,7 @@ router.route("/active")
     );
 
 
+
 router.route("/active/:id")
     .get(
         auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
@@ -49,6 +50,13 @@ router.route("/:id/status")
         auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
         LotteryControllers.updateLotteryStatus
     );
+
+router.get(
+    "/:id/dashboard",
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    LotteryControllers.getLotteryDashboardById
+);
+
 
 
 

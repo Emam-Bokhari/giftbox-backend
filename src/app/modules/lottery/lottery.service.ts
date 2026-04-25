@@ -1,6 +1,7 @@
 import ApiError from "../../../errors/ApiErrors";
 import { generateTicketId } from "../../../helpers/generateCustomId";
 import QueryBuilder from "../../builder/queryBuilder";
+import { LotteryParticipant } from "../participant/participant.model";
 import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant";
 import { TLottery } from "./lottery.interface";
 import { Lottery } from "./lottery.model";
@@ -326,6 +327,67 @@ const deleteLotteryFromDB = async (id: string) => {
     return data;
 };
 
+const getLotteryDashboardByIdFromDB = async (id: string) => {
+    if (!id) {
+        throw new ApiError(400, "Lottery ID is required");
+    }
+
+    // lottery details
+    const lottery = await Lottery.findById(id);
+
+    if (!lottery) {
+        throw new ApiError(404, "Lottery not found");
+    }
+
+    // participants
+    const participants = await LotteryParticipant.find({
+        lotteryId: id,
+    })
+        .populate("userId", "name email phone profileImage")
+        .sort({ createdAt: -1 });
+
+    // payment proofs
+    const paymentProofs = participants.map((p) => ({
+        participantId: p._id,
+        user: p.userId,
+        paymentProof: p.paymentProof,
+        status: p.status,
+    }));
+
+    // stats
+    const totalParticipants = participants.length;
+
+    const pending = participants.filter(
+        (p) => p.status === "PENDING"
+    ).length;
+
+    const approved = participants.filter(
+        (p) => p.status === "APPROVED"
+    ).length;
+
+    const rejected = participants.filter(
+        (p) => p.status === "REJECTED"
+    ).length;
+
+    // revenue
+    const revenue = participants
+        .filter((p) => p.status === "APPROVED")
+        .reduce((sum, _) => sum + lottery.ticketPrice, 0);
+
+    return {
+        lottery,
+        participants,
+        paymentProofs,
+        stats: {
+            totalParticipants,
+            pending,
+            approved,
+            rejected,
+            revenue,
+        },
+    };
+};
+
 export const LotteryServices = {
     createLotteryToDB,
     getActiveLotteryFromDB,
@@ -335,4 +397,5 @@ export const LotteryServices = {
     updateLotteryStatusIntoDB,
     updateLotteryIntoDB,
     deleteLotteryFromDB,
+    getLotteryDashboardByIdFromDB,
 }

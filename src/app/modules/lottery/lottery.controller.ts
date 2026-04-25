@@ -1,5 +1,6 @@
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
+import { LotteryParticipantServices } from "../participant/participant.service";
 import { LotteryServices } from "./lottery.service";
 
 const createLottery = catchAsync(async (req, res) => {
@@ -93,6 +94,21 @@ const deleteLottery = catchAsync(async (req, res) => {
     })
 })
 
+const getLotteryDashboardById = catchAsync(
+  async (req, res) => {
+    const { id } = req.params;
+
+    const result =
+      await LotteryServices.getLotteryDashboardByIdFromDB(id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "Lottery dashboard fetched successfully",
+      data: result,
+    });
+  }
+);
 
 
 export const LotteryControllers = {
@@ -104,4 +120,5 @@ export const LotteryControllers = {
     updateLottery,
     updateLotteryStatus,
     deleteLottery,
+    getLotteryDashboardById,
 }

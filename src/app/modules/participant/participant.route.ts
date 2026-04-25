@@ -24,4 +24,6 @@ router.route("/").post(
     ParticipantControllers.createParticipant
 );
 
+
+
 export const LotteryParticipantRoutes = router;
