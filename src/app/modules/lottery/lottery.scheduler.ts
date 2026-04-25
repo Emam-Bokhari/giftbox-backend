@@ -4,45 +4,68 @@ import { LOTTERY_STATUS } from "./lottery.constant";
 
 // run per minute
 export const startLotteryScheduler = () => {
-    cron.schedule("* * * * *", async () => {
-        try {
-            const now = new Date();
+  console.log("🟢 Lottery Scheduler Started...");
 
-            // activate Scheduled Lottery
+  cron.schedule("* * * * *", async () => {
+    const now = new Date();
 
-            const scheduledLotteries = await Lottery.find({
-                status: LOTTERY_STATUS.SCHEDULED,
-                startAt: { $lte: now },
-            });
+    console.log(`\n⏱️ Cron Tick: ${now.toISOString()}`);
 
-            for (const lottery of scheduledLotteries) {
-                // ensure only ONE active
-                const activeExists = await Lottery.exists({ status: LOTTERY_STATUS.ACTIVE });
+    try {
+      // -------------------------------
+      // 🎯 Activate Scheduled Lottery
+      // -------------------------------
+      const scheduledLotteries = await Lottery.find({
+        status: LOTTERY_STATUS.SCHEDULED,
+        startAt: { $lte: now },
+      });
 
-                if (activeExists) {
-                    // skip (or you can log)
-                    continue;
-                }
+      console.log(
+        `📌 Scheduled Lotteries Ready: ${scheduledLotteries.length}`
+      );
 
-                lottery.status = LOTTERY_STATUS.ACTIVE;
-                await lottery.save();
-            }
+      for (const lottery of scheduledLotteries) {
+        const activeExists = await Lottery.exists({
+          status: LOTTERY_STATUS.ACTIVE,
+        });
 
-
-            // end Active Lottery
-
-            const activeLotteries = await Lottery.find({
-                status: LOTTERY_STATUS.ACTIVE,
-                endAt: { $lte: now },
-            });
-
-            for (const lottery of activeLotteries) {
-                lottery.status = LOTTERY_STATUS.ENDED;
-                await lottery.save();
-            }
-
-        } catch (error) {
-            console.error("Lottery Scheduler Error:", error);
+        if (activeExists) {
+          console.log(
+            `⚠️ Skipped Activation (Active exists) → Lottery ID: ${lottery._id}`
+          );
+          continue;
         }
-    });
+
+        lottery.status = LOTTERY_STATUS.ACTIVE;
+        await lottery.save();
+
+        console.log(
+          `✅ Activated Lottery → ID: ${lottery._id}, Title: ${lottery.title}`
+        );
+      }
+
+      // -------------------------------
+      // 🛑 End Active Lottery
+      // -------------------------------
+      const activeLotteries = await Lottery.find({
+        status: LOTTERY_STATUS.ACTIVE,
+        endAt: { $lte: now },
+      });
+
+      console.log(`📌 Active Lotteries to End: ${activeLotteries.length}`);
+
+      for (const lottery of activeLotteries) {
+        lottery.status = LOTTERY_STATUS.ENDED;
+        await lottery.save();
+
+        console.log(
+          `🔴 Ended Lottery → ID: ${lottery._id}, Title: ${lottery.title}`
+        );
+      }
+
+      console.log("✅ Cron cycle completed");
+    } catch (error) {
+      console.error("❌ Lottery Scheduler Error:", error);
+    }
+  });
 };
