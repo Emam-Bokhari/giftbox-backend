@@ -12,7 +12,7 @@ import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 
 /* ================= NORMALIZER ================= */
-const normalizeIdentifier = (value: string) => value.trim().toLowerCase();
+export const normalizeIdentifier = (value: string) => value.trim().toLowerCase();
 
 /* ================= FIND USER (HYBRID) ================= */
 const findUserByIdentifier = (identifier: string, selectPassword = false) => {

@@ -15,6 +15,8 @@ import { Types } from "mongoose";
 import bcrypt from "bcrypt";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
 import { NOTIFICATION_TYPE } from "../notification/notification.constant";
+import { twilioService } from "../twilioService/sendOtpWithVerify";
+import { normalizeIdentifier } from "../auth/auth.service";
 
 
 // --- ADMIN SERVICES ---
@@ -100,70 +102,126 @@ const deleteAdminFromDB = async (id: any) => {
 
 // --- USER SERVICES ---
 const createUserToDB = async (payload: any) => {
-  const isExistUser = await User.findOne({ email: payload.email });
+  const { email, phone } = payload;
+
+  const identifier = email || phone;
+
+  if (!identifier) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Email or phone is required"
+    );
+  }
+
+  /* ================= DUPLICATE CHECK (HYBRID SAFE) ================= */
+  const orConditions: any[] = [];
+
+  if (email) {
+    orConditions.push({ email: normalizeIdentifier(email) });
+  }
+
+  if (phone) {
+    orConditions.push({ phone: normalizeIdentifier(phone) });
+  }
+
+  const isExistUser = await User.findOne({
+    $or: orConditions,
+  });
+
   if (isExistUser) {
-    throw new ApiError(StatusCodes.CONFLICT, "This Email already taken");
+    throw new ApiError(
+      StatusCodes.CONFLICT,
+      "Email or phone already exists"
+    );
   }
 
-  const createUser = await User.create(payload);
+  /* ================= CREATE USER ================= */
+  const createUser = await User.create({
+    ...payload,
+    email: email ? normalizeIdentifier(email) : undefined,
+    phone: phone ? normalizeIdentifier(phone) : undefined,
+  });
+
   if (!createUser) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Failed to create user");
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Failed to create user"
+    );
   }
 
-  //send email
+  /* ================= OTP GENERATION ================= */
   const otp = generateOTP();
-  const values = {
-    name: createUser.name,
-    otp: otp,
-    email: createUser.email!,
-  };
 
-  const createAccountTemplate = emailTemplate.createAccount(values);
-  emailHelper.sendEmail(createAccountTemplate);
-
-  //save to DB
   const authentication = {
     oneTimeCode: otp,
     expireAt: new Date(Date.now() + 3 * 60000),
   };
 
-  await User.findOneAndUpdate(
-    { _id: createUser._id },
-    { $set: { authentication } },
-  );
+  await User.findByIdAndUpdate(createUser._id, {
+    $set: { authentication },
+  });
 
-  const createToken = jwtHelper.createToken(
+  /* ================= SEND OTP (EMAIL OR PHONE) ================= */
+
+  // EMAIL FLOW
+  if (createUser.email) {
+    const values = {
+      name: createUser.name,
+      otp,
+      email: createUser.email,
+    };
+
+    const template = emailTemplate.createAccount(values);
+    await emailHelper.sendEmail(template);
+  }
+
+  // PHONE FLOW
+  else if (createUser.phone) {
+    if (!createUser.countryCode) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Country code is required for phone verification"
+      );
+    }
+
+    await twilioService.sendOTPWithVerify(
+      createUser.phone,
+      createUser.countryCode
+    );
+  }
+
+  /* ================= JWT TOKEN ================= */
+  const token = jwtHelper.createToken(
     {
       id: createUser._id,
       email: createUser.email,
+      phone: createUser.phone,
       role: createUser.role,
     },
     config.jwt.jwt_secret as Secret,
-    config.jwt.jwt_expire_in as string,
+    config.jwt.jwt_expire_in as string
   );
 
-  const result = {
-    token: createToken,
-    user: createUser,
-  };
-
-  // notify admin
-  const admin = await User.findOne({ role: USER_ROLES.SUPER_ADMIN }).select(
-    "_id name",
-  );
+  /* ================= ADMIN NOTIFICATION ================= */
+  const admin = await User.findOne({
+    role: USER_ROLES.SUPER_ADMIN,
+  }).select("_id name");
 
   if (admin) {
     await sendNotifications({
       title: "New User Signup",
-      text: `New user signed up successfully`,
+      text: "New user signed up successfully",
       receiver: admin._id.toString(),
       type: NOTIFICATION_TYPE.ADMIN,
-      referenceId: result.user._id.toString(),
+      referenceId: createUser._id.toString(),
       referenceModel: "User",
     });
   }
 
-  return result;
+  return {
+    token,
+    user: createUser,
+  };
 };
 
 const getUserProfileFromDB = async (user: JwtPayload): Promise<any> => {
