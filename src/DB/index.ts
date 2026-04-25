@@ -7,6 +7,7 @@ import { logger } from "../shared/logger";
 const superUser = {
   name: "Super Admin", // put client first name
   role: USER_ROLES.SUPER_ADMIN,
+  city: "Dhaka",
   email: config.admin.email,
   password: config.admin.password,
   verified: true,

@@ -1,36 +1,59 @@
 import { Model } from "mongoose";
 import { GENDER, STATUS, USER_ROLES } from "../../../enums/user";
 
+/* ================= USER ================= */
 export type IUser = {
   name: string;
+
   role?: USER_ROLES;
+
+  /* ================= HYBRID IDENTITY ================= */
   email?: string;
+  phone?: string;
+  countryCode?: string;
+
+  password: string;
+
+  verified: boolean;
+
+  status?: STATUS;
+
+  /* ================= PROFILE ================= */
   profileImage?: string;
   coverImage?: string;
-  password: string;
-  verified: boolean;
-  phone: string;
-  countryCode?: string;
+
   city: string;
   gender?: GENDER;
-  status?: STATUS;
+
   firebaseUid?: string;
   deviceToken?: string;
+
+  /* ================= LOCATION ================= */
   location?: {
     type: "Point";
-    coordinates: [number, number]; // [longitude, latitude],
+    coordinates: [number, number]; // [longitude, latitude]
     address: string;
   };
+
+  /* ================= AUTH ================= */
   authentication?: {
-    isResetPassword: boolean;
-    oneTimeCode: number;
-    expireAt: Date;
+    isResetPassword?: boolean;
+    oneTimeCode?: number;
+    expireAt?: Date;
+    authType?: string;
   };
 };
 
-
+/* ================= STATIC METHODS ================= */
 export type UserModal = {
-  isExistUserById(id: string): any;
-  isExistUserByEmail(email: string): any;
-  isMatchPassword(password: string, hashPassword: string): boolean;
+  isExistUserById(id: string): Promise<IUser | null>;
+
+  isExistUserByEmail(email: string): Promise<IUser | null>;
+
+  isExistUserByPhone(phone: string): Promise<IUser | null>;
+
+  isMatchPassword(
+    password: string,
+    hashPassword: string
+  ): Promise<boolean>;
 } & Model<IUser>;

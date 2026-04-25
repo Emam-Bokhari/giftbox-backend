@@ -101,9 +101,11 @@ const forgetPasswordToDB = async (identifier: string) => {
 
   /* ================= PHONE FLOW ================= */
   else {
-    if (!user.countryCode) {
-      throw new ApiError(400, "Country code missing for user");
+    if (!user.countryCode || !user.phone) {
+      throw new ApiError(400, "Country code or phone number missing for user");
     }
+
+
 
     await twilioService.sendOTPWithVerify(
       user.phone,
@@ -149,8 +151,8 @@ const verifyOtpToDB = async (payload: {
   }
 
   /* ================= PHONE OTP FLOW ================= */
-  if (!user.countryCode) {
-    throw new ApiError(400, "Country code missing for user");
+  if (!user.countryCode || !user.phone) {
+    throw new ApiError(400, "Country code or phone number missing for user");
   }
 
   const isApproved = await twilioService.verifyOTP(
@@ -322,8 +324,8 @@ const resendOtpToDB = async (payload: {
   }
 
   /* ================= PHONE FLOW ================= */
-  if (!user.countryCode) {
-    throw new ApiError(400, "Country code missing for user");
+  if (!user.countryCode || !user.phone) {
+    throw new ApiError(400, "Country code or phone number missing for user");
   }
 
   await twilioService.sendOTPWithVerify(

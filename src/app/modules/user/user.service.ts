@@ -11,7 +11,6 @@ import QueryBuilder from "../../builder/queryBuilder";
 import generateOTP from "../../../util/generateOTP";
 import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
-import { generateMembershipId } from "../../../helpers/generateYearBasedId";
 import { Types } from "mongoose";
 import bcrypt from "bcrypt";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
@@ -96,334 +95,8 @@ const deleteAdminFromDB = async (id: any) => {
   return isExistAdmin;
 };
 
-// --- HOST SERVICES ---
-const createHostToDB = async (payload: any) => {
-  const isExistHost = await User.findOne({ email: payload.email });
-  if (isExistHost) {
-    throw new ApiError(StatusCodes.CONFLICT, "This Email already taken");
-  }
 
-  const membershipId = await generateMembershipId();
 
-  const hostPayload = {
-    ...payload,
-    verified: true,
-    status: STATUS.ACTIVE,
-    role: USER_ROLES.HOST,
-    membershipId,
-  };
-
-  const createHost = await User.create(hostPayload);
-
-  // notify admin
-  const admin = await User.findOne({ role: USER_ROLES.SUPER_ADMIN }).select(
-    "_id name",
-  );
-
-  if (admin) {
-    await sendNotifications({
-      title: "New Host Created",
-      text: `New host account created successfully by admin (${admin.name || admin._id})`,
-      receiver: admin._id.toString(),
-      type: NOTIFICATION_TYPE.ADMIN,
-      referenceId: createHost._id.toString(),
-      referenceModel: "User",
-    });
-  }
-
-  return createHost;
-};
-
-// host revenue
-const ghostLoginAsHost = async (superAdmin: JwtPayload, hostId: string) => {
-  if (superAdmin.role !== USER_ROLES.SUPER_ADMIN) {
-    throw new ApiError(403, "Unauthorized: Only SuperAdmin can use ghost mode");
-  }
-
-  const host = await User.findById(hostId);
-
-  if (!host || host.role !== USER_ROLES.HOST) {
-    throw new ApiError(404, "Host not found");
-  }
-
-  // Generate JWT as host
-  const token = jwtHelper.createToken(
-    {
-      id: host._id,
-      email: host.email,
-      role: USER_ROLES.HOST,
-    },
-    config.jwt.jwt_secret as Secret,
-    config.jwt.jwt_expire_in as string,
-  );
-
-  return {
-    accessToken: token,
-    host: {
-      id: host._id,
-      name: host.name,
-      email: host.email,
-      membershipId: host.membershipId,
-    },
-  };
-};
-
-const getAllHostFromDB = async (query: any) => {
-  const baseQuery = User.find({
-    role: USER_ROLES.HOST,
-    // status: STATUS.ACTIVE,
-    verified: true,
-  });
-
-  const queryBuilder = new QueryBuilder(baseQuery, query)
-    .search(["name", "email", "membershipId"])
-    .sort()
-    .fields()
-    .filter()
-    .paginate();
-
-  const hosts = await queryBuilder.modelQuery;
-  const meta = await queryBuilder.countTotal();
-
-  if (!hosts || hosts.length === 0) throw new ApiError(404, "No hosts found");
-
-  const hostIds = hosts.map((h) => h._id);
-
-  const hostsWithVehicles = await User.aggregate([
-    { $match: { _id: { $in: hostIds } } },
-    {
-      $lookup: {
-        from: "cars",
-        let: { hostId: "$_id" },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ["$assignedHosts", "$$hostId"] }, // ✅ fixed: assignedHosts
-            },
-          },
-        ],
-        as: "vehicles",
-      },
-    },
-    {
-      $addFields: {
-        vehicleCount: { $size: "$vehicles" },
-      },
-    },
-  ]);
-
-  const allCarIds = hostsWithVehicles.flatMap((host) =>
-    host.vehicles.map((v: any) => v._id),
-  );
-
-  const tripMap = await getCarTripCountMap(allCarIds);
-
-  await Promise.all(
-    hostsWithVehicles.map(async (host) => {
-      const vehicleIds = host.vehicles.map((v: any) => v._id);
-
-      // Trips: sum from map
-      host.totalTrips = vehicleIds.reduce((acc: any, carId: any) => {
-        return acc + (tripMap[carId.toString()] || 0);
-      }, 0);
-
-      // Revenue — Transaction collection, BOOKING + EXTEND, COMPLETED only
-      const revenueResult = await Transaction.aggregate([
-        {
-          $match: {
-            status: TRANSACTION_STATUS.SUCCESS,
-            type: { $in: [TRANSACTION_TYPE.BOOKING, TRANSACTION_TYPE.EXTEND] },
-          },
-        },
-        {
-          $lookup: {
-            from: "bookings",
-            localField: "bookingId",
-            foreignField: "_id",
-            as: "booking",
-          },
-        },
-        { $unwind: "$booking" },
-        {
-          $match: {
-            "booking.hostId": host._id, // Use host's ID for accuracy
-            "booking.bookingStatus": BOOKING_STATUS.COMPLETED,
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            revenue: { $sum: "$charges.hostCommission" },
-          },
-        },
-      ]);
-
-      host.totalRevenue = revenueResult[0]?.revenue ?? 0;
-    }),
-  );
-
-  return {
-    data: hostsWithVehicles,
-    meta,
-  };
-};
-// end host revenue
-
-const getHostByIdFromDB = async (id: string) => {
-  const result = await User.aggregate([
-    {
-      $match: {
-        _id: new Types.ObjectId(id),
-        role: USER_ROLES.HOST,
-      },
-    },
-    {
-      $lookup: {
-        from: "cars",
-        let: { hostId: "$_id" },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ["$$hostId", "$assignedHosts"] }, // ✅ assignedHosts
-            },
-          },
-          { $project: { assignedHosts: 0 } },
-        ],
-        as: "vehicles",
-      },
-    },
-    {
-      $addFields: {
-        vehicleCount: { $size: "$vehicles" },
-      },
-    },
-  ]);
-
-  if (!result.length)
-    throw new ApiError(404, "No host is found in the database by this ID");
-
-  const host = result[0];
-
-  const vehicleIds = host.vehicles.map((v: any) => v._id);
-
-  // -------------------- Trips --------------------
-  const tripMap = await getCarTripCountMap(vehicleIds);
-  const totalTrips = vehicleIds.reduce((acc: number, carId: any) => {
-    return acc + (tripMap[carId.toString()] || 0);
-  }, 0);
-
-  // -------------------- Revenue --------------------
-  const revenueResult = await Transaction.aggregate([
-    {
-      $match: {
-        status: TRANSACTION_STATUS.SUCCESS,
-        type: { $in: [TRANSACTION_TYPE.BOOKING, TRANSACTION_TYPE.EXTEND] },
-      },
-    },
-    {
-      $lookup: {
-        from: "bookings",
-        localField: "bookingId",
-        foreignField: "_id",
-        as: "booking",
-      },
-    },
-    { $unwind: "$booking" },
-    {
-      $match: {
-        "booking.hostId": host._id, // Use host's ID for accuracy
-        "booking.bookingStatus": BOOKING_STATUS.COMPLETED,
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        revenue: { $sum: "$charges.hostCommission" },
-      },
-    },
-  ]);
-
-  host.totalTrips = totalTrips;
-  host.totalRevenue = revenueResult[0]?.revenue ?? 0;
-
-  return host;
-};
-
-const updateHostStatusByIdToDB = async (
-  id: string,
-  status: STATUS.ACTIVE | STATUS.INACTIVE,
-) => {
-  if (![STATUS.ACTIVE, STATUS.INACTIVE].includes(status)) {
-    throw new ApiError(400, "Status must be either 'ACTIVE' or 'INACTIVE'");
-  }
-
-  const user = await User.findOne({
-    _id: id,
-    role: USER_ROLES.HOST,
-  });
-  if (!user) {
-    throw new ApiError(404, "No host is found by this host ID");
-  }
-
-  const result = await User.findByIdAndUpdate(id, { status }, { new: true });
-  if (!result) {
-    throw new ApiError(400, "Failed to change status by this host ID");
-  }
-
-  return result;
-};
-
-const deleteHostByIdFromD = async (id: string) => {
-  const user = await User.findOne({
-    _id: id,
-    role: USER_ROLES.HOST,
-  });
-
-  if (!user) {
-    throw new ApiError(404, "Host doest not exist in the database");
-  }
-
-  const result = await User.findByIdAndDelete(id);
-
-  if (!result) {
-    throw new ApiError(400, "Failed to delete user by this ID");
-  }
-
-  // notify admin
-  const admin = await User.findOne({ role: USER_ROLES.SUPER_ADMIN }).select(
-    "_id name",
-  );
-
-  if (admin) {
-    await sendNotifications({
-      title: "Host Account Deleted",
-      text: `Host deleted successfully by admin (${admin.name || admin._id})`,
-      receiver: admin._id.toString(),
-      type: NOTIFICATION_TYPE.ADMIN,
-      referenceId: result._id.toString(),
-      referenceModel: "User",
-    });
-  }
-
-  return result;
-};
-
-const getTotalUsersAndHostsFromDB = async () => {
-  const [totalUsers, totalHosts] = await Promise.all([
-    User.countDocuments({
-      role: USER_ROLES.USER,
-      status: STATUS.ACTIVE,
-      verified: true,
-    }),
-    User.countDocuments({
-      role: USER_ROLES.HOST,
-      status: STATUS.ACTIVE,
-      verified: true,
-    }),
-  ]);
-
-  return { totalUsers, totalHosts };
-};
 
 // --- USER SERVICES ---
 const createUserToDB = async (payload: any) => {
@@ -502,46 +175,6 @@ const getUserProfileFromDB = async (user: JwtPayload): Promise<any> => {
   }
 
   const profile: any = { ...isExistUser.toObject() };
-
-  // if host, extra stats
-  if (profile.role === USER_ROLES.HOST) {
-    // Total bookings
-    const totalBookings = await Booking.countDocuments({ hostId: id });
-
-    // Confirmed/Completed bookings
-    const completedBookings = await Booking.countDocuments({
-      hostId: id,
-      bookingStatus: { $in: [BOOKING_STATUS.COMPLETED] },
-    });
-
-    // Success rate %
-    const successRate =
-      totalBookings > 0
-        ? Math.round((completedBookings / totalBookings) * 100)
-        : 0;
-
-    // Total trips from all assigned cars
-    const hostCars = await Car.find({ assignedHosts: id }).select("_id");
-    const carIds = hostCars.map((car) => car._id);
-    const tripMap = await getCarTripCountMap(carIds);
-    const trips = Object.values(tripMap).reduce((acc, count) => acc + count, 0);
-
-    // Review summary
-    const reviewSummary = await ReviewServices.getReviewSummary(
-      id,
-      REVIEW_TARGET_TYPE.HOST,
-    );
-
-    profile.totalBookings = totalBookings;
-    // profile.completedBookings = completedBookings;
-    profile.successRate = successRate;
-    profile.averageRating = reviewSummary.averageRating;
-    // profile.totalReviews = reviewSummary.totalReviews;
-    // profile.starCounts = reviewSummary.starCounts;
-    // profile.reviews = reviewSummary.reviews;
-    profile.trips = trips;
-  }
-
   return profile;
 };
 
@@ -570,42 +203,7 @@ const updateProfileToDB = async (
   return updateDoc;
 };
 
-const switchProfileToDB = async (
-  userId: string,
-  role: USER_ROLES.USER | USER_ROLES.HOST,
-) => {
-  const user = await User.findById(userId);
 
-  if (!user) throw new ApiError(404, "This user is not found in the database");
-
-  if (![USER_ROLES.USER, USER_ROLES.HOST].includes(role))
-    throw new ApiError(400, "Role is must be either 'USER' or 'HOST'");
-
-  const updatedUser = await User.findByIdAndUpdate(
-    userId,
-    { role },
-    { new: true },
-  );
-
-  if (!updatedUser) throw new ApiError(400, "Failed to update role");
-
-  const createToken = jwtHelper.createToken(
-    {
-      id: updatedUser._id,
-      email: updatedUser.email,
-      role: updatedUser.role,
-    },
-    config.jwt.jwt_secret as Secret,
-    config.jwt.jwt_expire_in as string,
-  );
-
-  const result = {
-    token: createToken,
-    user: updatedUser,
-  };
-
-  return result;
-};
 
 const getAllUsersFromDB = async (query: any) => {
   // Base user query
@@ -628,53 +226,11 @@ const getAllUsersFromDB = async (query: any) => {
   if (!users || users.length === 0)
     throw new ApiError(404, "No users are found in the database");
 
-  // Convert users to plain objects for aggregation join
-  const userIds = users.map((u) => u._id);
 
-  // Aggregate bookings per user
-  const bookingStats = await Booking.aggregate([
-    {
-      $match: {
-        userId: { $in: userIds },
-        bookingStatus: { $ne: BOOKING_STATUS.CANCELLED },
-        transactionId: { $exists: true, $ne: null },
-      },
-    },
-    {
-      $lookup: {
-        from: "transactions",
-        localField: "transactionId",
-        foreignField: "_id",
-        as: "transaction",
-      },
-    },
-    { $unwind: "$transaction" },
-    {
-      $match: {
-        "transaction.status": TRANSACTION_STATUS.SUCCESS,
-      },
-    },
-    {
-      $group: {
-        _id: "$userId",
-        totalBookings: { $sum: 1 },
-        totalSpent: { $sum: "$transaction.amount" },
-      },
-    },
-  ]);
 
-  // Map booking stats to users
-  const usersWithStats = users.map((user) => {
-    const stats = bookingStats.find((b) => b._id.equals(user._id));
-    return {
-      ...user.toObject(),
-      bookingCount: stats?.totalBookings || 0,
-      totalSpent: stats?.totalSpent || 0,
-    };
-  });
 
   return {
-    data: usersWithStats,
+    data: users,
     meta,
   };
 };
@@ -764,15 +320,7 @@ export const UserService = {
   getAllUsersFromDB,
   getUserByIdFromDB,
   updateProfileToDB,
-  createHostToDB,
-  ghostLoginAsHost,
-  getAllHostFromDB,
-  getHostByIdFromDB,
-  updateHostStatusByIdToDB,
-  deleteHostByIdFromD,
-  getTotalUsersAndHostsFromDB,
   createAdminToDB,
-  switchProfileToDB,
   updateUserStatusByIdToDB,
   updateAdminStatusByIdToDB,
   deleteUserByIdFromD,

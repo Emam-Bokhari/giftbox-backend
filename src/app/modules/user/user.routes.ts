@@ -2,22 +2,21 @@ import { FOLDER_NAMES } from "./../../../enums/files";
 import express from "express";
 import { USER_ROLES } from "../../../enums/user";
 import { UserController } from "./user.controller";
-import { UserValidation } from "./user.validation";
 import auth from "../../middlewares/auth";
 import validateRequest from "../../middlewares/validateRequest";
 import fileUploadHandler from "../../middlewares/fileUploaderHandler";
 import parseAllFilesData from "../../middlewares/parseAllFileData";
+import { UserValidationSchema } from "./user.validation";
 
 const router = express.Router();
 
 const requireAdminOrSuperAdmin = auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN);
 const requireSuperAdmin = auth(USER_ROLES.SUPER_ADMIN);
-const requireHostOrUser = auth(USER_ROLES.HOST, USER_ROLES.USER);
+const requireUser = auth(USER_ROLES.USER);
 const requireAnyUser = auth(
   USER_ROLES.ADMIN,
   USER_ROLES.SUPER_ADMIN,
   USER_ROLES.USER,
-  USER_ROLES.HOST,
 );
 
 /* ---------------------------- PROFILE ROUTES ---------------------------- */
@@ -25,7 +24,7 @@ router
   .route("/profile")
   .get(requireAnyUser, UserController.getUserProfile)
   .delete(
-    auth(USER_ROLES.USER, USER_ROLES.HOST, USER_ROLES.ADMIN),
+    requireUser,
     UserController.deleteProfile,
   );
 
@@ -33,8 +32,7 @@ router
 router.post(
   "/create-admin",
   requireSuperAdmin,
-
-  validateRequest(UserValidation.createAdminZodSchema),
+  validateRequest(UserValidationSchema.createUserZodSchema),
   UserController.createAdmin,
 );
 
@@ -42,33 +40,6 @@ router.post(
 router.get("/admins", requireSuperAdmin, UserController.getAdmin);
 router.delete("/admins/:id", requireSuperAdmin, UserController.deleteAdmin);
 
-/* ---------------------------- HOST LIST ------------------------------ */
-router.post("/create-host", requireSuperAdmin, UserController.createHost);
-
-router.post(
-  "/ghost-login/:hostId",
-  requireSuperAdmin,
-  UserController.ghostLoginAsHost,
-);
-
-router.get("/hosts", requireAdminOrSuperAdmin, UserController.getAllHosts);
-router.get("/hosts/:id", requireAdminOrSuperAdmin, UserController.getHostById);
-router.patch(
-  "/hosts/status/:id",
-  requireAdminOrSuperAdmin,
-  UserController.updateHostStatusById,
-);
-router.delete(
-  "/hosts/:id",
-  requireAdminOrSuperAdmin,
-  UserController.deleteHostById,
-);
-
-router.get(
-  "/total-users-hosts",
-  requireAdminOrSuperAdmin,
-  UserController.getTotalUsersAndHosts,
-);
 
 /* ---------------------------- USER CREATE & UPDATE ---------------------- */
 router
@@ -90,13 +61,6 @@ router
     ),
     UserController.updateProfile,
   );
-
-/* ---------------------------- SWITCH PROFILE ---------------------------- */
-router.patch(
-  "/switch-profile",
-  requireHostOrUser,
-  UserController.switchProfile,
-);
 
 /* ---------------------------- STATUS UPDATE ----------------------------- */
 router.patch(

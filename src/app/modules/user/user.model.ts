@@ -2,79 +2,90 @@ import { model, Schema } from "mongoose";
 import { GENDER, STATUS, USER_ROLES } from "../../../enums/user";
 import { IUser, UserModal } from "./user.interface";
 import bcrypt from "bcrypt";
-
 import config from "../../../config";
 
+/* ================= USER SCHEMA ================= */
 const userSchema = new Schema<IUser, UserModal>(
   {
     name: {
       type: String,
       required: true,
     },
+
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
       default: USER_ROLES.USER,
     },
+
+    /* ================= HYBRID IDENTITY ================= */
     email: {
       type: String,
-      required: false,
-      unique: true,
       lowercase: true,
       trim: true,
+      sparse: true,   // IMPORTANT (fix unique conflict)
     },
-    profileImage: {
+
+    phone: {
       type: String,
-      required: false,
-      default: "",
+      sparse: true,   // IMPORTANT (fix unique conflict)
     },
-    coverImage: {
+
+    countryCode: {
       type: String,
-      required: false,
-      default: "",
+      default: "+223",
     },
+
+    /* ================= SECURITY ================= */
     password: {
       type: String,
-      required: false,
       select: 0,
       minlength: 8,
     },
+
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+
     status: {
       type: String,
       enum: Object.values(STATUS),
       default: STATUS.ACTIVE,
     },
-    phone: {
+
+    /* ================= PROFILE ================= */
+    profileImage: {
       type: String,
-      required: true,
+      default: "",
     },
-    countryCode: {
+
+    coverImage: {
       type: String,
-      required: false,
-      default: "+223",
+      default: "",
     },
+
     city: {
       type: String,
       required: true,
     },
+
     gender: {
       type: String,
       enum: Object.values(GENDER),
-      required: false,
     },
+
     firebaseUid: {
       type: String,
       unique: true,
       sparse: true,
     },
+
     deviceToken: {
       type: String,
-      required: false,
     },
-    verified: {
-      type: Boolean,
-      default: false,
-    },
+
+    /* ================= LOCATION ================= */
     location: {
       type: {
         type: String,
@@ -91,6 +102,8 @@ const userSchema = new Schema<IUser, UserModal>(
         default: "",
       },
     },
+
+    /* ================= AUTH ================= */
     authentication: {
       type: {
         isResetPassword: {
@@ -116,47 +129,36 @@ const userSchema = new Schema<IUser, UserModal>(
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
-//exist user check
-userSchema.statics.isExistUserById = async (id: string) => {
-  const isExist = await User.findById(id);
-  return isExist;
+/* ================= STATIC METHODS ================= */
+userSchema.statics.isExistUserById = async function (id: string) {
+  return await this.findById(id);
 };
 
-userSchema.statics.isExistUserByEmail = async (email: string) => {
-  const isExist = await User.findOne({ email });
-  return isExist;
+userSchema.statics.isExistUserByEmail = async function (email: string) {
+  return await this.findOne({ email });
 };
 
-
-//is match password
-userSchema.statics.isMatchPassword = async (
+userSchema.statics.isMatchPassword = async function (
   password: string,
-  hashPassword: string,
-): Promise<boolean> => {
+  hashPassword: string
+) {
   return await bcrypt.compare(password, hashPassword);
 };
 
-//check user
+/* ================= PASSWORD HASH ================= */
 userSchema.pre("save", async function (next) {
-  if (this.isNew) {
-    // password hash
-    if (this.password) {
-      this.password = await bcrypt.hash(
-        this.password,
-        Number(config.bcrypt_salt_rounds),
-      );
-    }
-  } else {
-    if (this.isModified("password") && this.password) {
-      this.password = await bcrypt.hash(
-        this.password,
-        Number(config.bcrypt_salt_rounds),
-      );
-    }
+  if (!this.isModified("password")) return next();
+
+  if (this.password) {
+    this.password = await bcrypt.hash(
+      this.password,
+      Number(config.bcrypt_salt_rounds)
+    );
   }
+
   next();
 });
 

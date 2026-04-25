@@ -5,7 +5,7 @@ import { Morgan } from "./shared/morgan";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import path from "path";
 import v2Router from "./app/routes/v2";
-import { handleStripeWebhook } from "./helpers/webhooks/handleStripeWebhook";
+
 import router from "./app/routes";
 
 const app: Application = express();
@@ -13,11 +13,6 @@ const app: Application = express();
 app.set("views", path.join(__dirname, "..", "views"));
 app.set("view engine", "ejs");
 
-app.post(
-  "/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  handleStripeWebhook,
-);
 
 // morgan
 app.use(Morgan.successHandler);
