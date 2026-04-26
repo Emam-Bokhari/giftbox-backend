@@ -111,6 +111,24 @@ const getLotteryDashboardById = catchAsync(
     }
 );
 
+const getLotteryWinnersByLotteryId = catchAsync(
+  async (req, res) => {
+    const { id } = req.params;
+
+    const result =
+      await LotteryServices.getLotteryWinnersByLotteryIdFromDB(
+        id
+      );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "Lottery winners fetched successfully",
+      data: result,
+    });
+  }
+);
+
 
 export const LotteryControllers = {
     createLottery,
@@ -122,4 +140,5 @@ export const LotteryControllers = {
     updateLotteryStatus,
     deleteLottery,
     getLotteryDashboardById,
+    getLotteryWinnersByLotteryId,
 }

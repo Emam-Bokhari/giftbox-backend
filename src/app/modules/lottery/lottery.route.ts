@@ -57,6 +57,11 @@ router.get(
     LotteryControllers.getLotteryDashboardById
 );
 
+router.get(
+    "/:id/winners",
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.USER),
+    LotteryControllers.getLotteryWinnersByLotteryId
+);
 
 
 
