@@ -6,8 +6,8 @@ import { NOTIFICATION_TYPE } from "../app/modules/notification/notification.cons
 export const sendNotifications = async (
   data: Partial<INotification>,
 ): Promise<INotification | any> => {
-  if (data.type === NOTIFICATION_TYPE.USER || data.type === NOTIFICATION_TYPE.HOST) {
-    // For User and Host, use the Push Notification Helper (which also saves to DB)
+  if (data.type === NOTIFICATION_TYPE.USER) {
+    // For User, use the Push Notification Helper (which also saves to DB)
     if (!data.receiver) return;
     
     const payload = {

@@ -185,7 +185,6 @@ const deleteAdminFromDB = async (id: any) => {
 
 // --- USER SERVICES ---
 
-
 const createUserToDB = async (payload: any) => {
   const { email, phone } = payload;
 
@@ -198,7 +197,7 @@ const createUserToDB = async (payload: any) => {
     );
   }
 
-  if(!payload.city){
+  if (!payload.city) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       "City is required"
@@ -225,18 +224,15 @@ const createUserToDB = async (payload: any) => {
     );
   }
 
-  /* ================= CLEAN USER DATA ================= */
-  const userData = {
+  /* ================= CREATE USER ================= */
+  const createUser = await User.create({
     name: payload.name,
     email: email ? normalizeIdentifier(email) : undefined,
     phone: phone ? normalizeIdentifier(phone) : undefined,
     countryCode: payload.countryCode,
     password: payload.password,
     verified: false,
-  };
-
-  /* ================= CREATE USER ================= */
-  const createUser = await User.create(userData);
+  });
 
   if (!createUser) {
     throw new ApiError(
@@ -245,7 +241,7 @@ const createUserToDB = async (payload: any) => {
     );
   }
 
-  /* ================= OTP GENERATION (NON-BLOCKING) ================= */
+  /* ================= OTP ================= */
   const otp = generateOTP();
 
   createUser.authentication = {
@@ -256,15 +252,13 @@ const createUserToDB = async (payload: any) => {
   await createUser.save();
 
   /* ================= SEND OTP ================= */
-
   if (createUser.email) {
-    const values = {
+    const template = emailTemplate.createAccount({
       name: createUser.name,
       otp,
       email: createUser.email,
-    };
+    });
 
-    const template = emailTemplate.createAccount(values);
     await emailHelper.sendEmail(template);
   } else if (createUser.phone) {
     if (!createUser.countryCode) {
@@ -280,7 +274,7 @@ const createUserToDB = async (payload: any) => {
     );
   }
 
-  /* ================= JWT TOKEN ================= */
+  /* ================= JWT ================= */
   const token = jwtHelper.createToken(
     {
       id: createUser._id,
@@ -295,7 +289,7 @@ const createUserToDB = async (payload: any) => {
   /* ================= ADMIN NOTIFICATION ================= */
   const admin = await User.findOne({
     role: USER_ROLES.SUPER_ADMIN,
-  }).select("_id name");
+  }).select("_id");
 
   if (admin) {
     await sendNotifications({

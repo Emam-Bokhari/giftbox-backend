@@ -1,13 +1,120 @@
 import { USER_ROLES } from "../../../enums/user";
 import ApiError from "../../../errors/ApiErrors";
 import { generateTicketId } from "../../../helpers/generateCustomId";
+import { sendNotifications } from "../../../helpers/notificationsHelper";
 import QueryBuilder from "../../builder/queryBuilder";
+import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
 import { LotteryParticipant } from "../participant/participant.model";
 import { User } from "../user/user.model";
 import { LotteryWinner } from "../winner/winner.model";
 import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant";
 import { TLottery } from "./lottery.interface";
 import { Lottery } from "./lottery.model";
+
+// const createLotteryToDB = async (payload: TLottery) => {
+//     const {
+//         title,
+//         description,
+//         banner,
+//         ticketPrice,
+//         currency,
+//         mode,
+//         startAt,
+//         endAt,
+//     } = payload;
+
+
+//     if (!title || !ticketPrice || !currency || !mode || !endAt) {
+//         throw new ApiError(400, "Missing required fields");
+//     }
+
+//     const endTime = new Date(endAt);
+//     if (isNaN(endTime.getTime())) {
+//         throw new ApiError(400, "Invalid end date");
+//     }
+
+//     // generate ticket number
+//     const ticketNumber = await generateTicketId();
+//     payload.ticketNumber = ticketNumber;
+
+//     // only ONE ACTIVE lottery allowed
+
+//     if (mode === LOTTERY_MODE.INSTANT) {
+//         const activeExists = await Lottery.exists({
+//             status: LOTTERY_STATUS.ACTIVE,
+//         });
+
+//         if (activeExists) {
+//             throw new ApiError(
+//                 400,
+//                 "Another active lottery already exists. Please end it first."
+//             );
+//         }
+//     }
+
+
+//     // determine status safely
+
+//     let status: LOTTERY_STATUS;
+//     let startTime: Date | undefined;
+
+//     switch (mode) {
+//         case LOTTERY_MODE.INSTANT: {
+//             status = LOTTERY_STATUS.ACTIVE;
+//             startTime = new Date();
+//             break;
+//         }
+
+//         case LOTTERY_MODE.SCHEDULE: {
+//             if (!startAt) {
+//                 throw new ApiError(
+//                     400,
+//                     "Start time is required for schedule mode"
+//                 );
+//             }
+
+//             const parsedStart = new Date(startAt);
+//             if (isNaN(parsedStart.getTime())) {
+//                 throw new ApiError(400, "Invalid start date");
+//             }
+
+//             if (parsedStart >= endTime) {
+//                 throw new ApiError(
+//                     400,
+//                     "Start time must be before end time"
+//                 );
+//             }
+
+//             status = LOTTERY_STATUS.SCHEDULED;
+//             startTime = parsedStart;
+//             break;
+//         }
+
+//         case LOTTERY_MODE.DRAFT: {
+//             status = LOTTERY_STATUS.DRAFT;
+//             break;
+//         }
+
+//         default:
+//             throw new ApiError(400, "Invalid lottery mode");
+//     }
+
+
+//     const lottery = await Lottery.create({
+//         ticketNumber,
+//         title,
+//         description,
+//         banner,
+//         ticketPrice,
+//         currency,
+//         mode,
+//         status,
+//         startAt: startTime,
+//         endAt: endTime,
+//     });
+
+//     return lottery;
+// };
 
 const createLotteryToDB = async (payload: TLottery) => {
     const {
@@ -21,7 +128,6 @@ const createLotteryToDB = async (payload: TLottery) => {
         endAt,
     } = payload;
 
-
     if (!title || !ticketPrice || !currency || !mode || !endAt) {
         throw new ApiError(400, "Missing required fields");
     }
@@ -31,11 +137,8 @@ const createLotteryToDB = async (payload: TLottery) => {
         throw new ApiError(400, "Invalid end date");
     }
 
-    // generate ticket number
     const ticketNumber = await generateTicketId();
     payload.ticketNumber = ticketNumber;
-
-    // only ONE ACTIVE lottery allowed
 
     if (mode === LOTTERY_MODE.INSTANT) {
         const activeExists = await Lottery.exists({
@@ -50,20 +153,16 @@ const createLotteryToDB = async (payload: TLottery) => {
         }
     }
 
-
-    // determine status safely
-
     let status: LOTTERY_STATUS;
     let startTime: Date | undefined;
 
     switch (mode) {
-        case LOTTERY_MODE.INSTANT: {
+        case LOTTERY_MODE.INSTANT:
             status = LOTTERY_STATUS.ACTIVE;
             startTime = new Date();
             break;
-        }
 
-        case LOTTERY_MODE.SCHEDULE: {
+        case LOTTERY_MODE.SCHEDULE:
             if (!startAt) {
                 throw new ApiError(
                     400,
@@ -86,17 +185,14 @@ const createLotteryToDB = async (payload: TLottery) => {
             status = LOTTERY_STATUS.SCHEDULED;
             startTime = parsedStart;
             break;
-        }
 
-        case LOTTERY_MODE.DRAFT: {
+        case LOTTERY_MODE.DRAFT:
             status = LOTTERY_STATUS.DRAFT;
             break;
-        }
 
         default:
             throw new ApiError(400, "Invalid lottery mode");
     }
-
 
     const lottery = await Lottery.create({
         ticketNumber,
@@ -110,6 +206,22 @@ const createLotteryToDB = async (payload: TLottery) => {
         startAt: startTime,
         endAt: endTime,
     });
+
+    /* ================= ADMIN NOTIFICATION ================= */
+    const admin = await User.findOne({
+        role: USER_ROLES.SUPER_ADMIN,
+    }).select("_id");
+
+    if (admin) {
+        await sendNotifications({
+            title: "New Lottery Created",
+            text: `Lottery "${lottery.title}" has been created`,
+            receiver: admin._id.toString(),
+            type: NOTIFICATION_TYPE.ADMIN,
+            referenceId: lottery._id.toString(),
+            referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY,
+        });
+    }
 
     return lottery;
 };
