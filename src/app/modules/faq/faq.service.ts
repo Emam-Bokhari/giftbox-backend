@@ -16,7 +16,7 @@ const createFaqToDB = async (payload: TFaq) => {
 const faqsFromDB = async () => {
   const faqs = await Faq.find({});
   if (!faqs || faqs.length === 0) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "No Faqs found");
+   return [];
   }
   return faqs;
 };
@@ -29,7 +29,7 @@ const deleteFaqToDB = async (id: string) => {
   const result = await Faq.findByIdAndDelete(id);
 
   if (!result) {
-    throw new ApiError(404, "No faq found by this ID");
+   return {};
   }
 
   return result;
