@@ -10,32 +10,38 @@ class QueryBuilder<T> {
   }
 
   // SEARCH (generic + safe)
-  search(searchableFields: string[]) {
-    const searchTerm = this.query.searchTerm as string;
+ search(searchableFields: string[]) {
+  const searchTerm = this.query.searchTerm as string;
 
-    if (!searchTerm) return this;
+  if (!searchTerm) return this;
 
-    const orConditions: FilterQuery<T>[] = [];
+  const orConditions: FilterQuery<any>[] = [];
 
-    searchableFields.forEach((field) => {
-      orConditions.push({
-        [field]: { $regex: searchTerm, $options: "i" },
-      } as FilterQuery<T>);
+  searchableFields.forEach((field) => {
+    orConditions.push({
+      [field]: {
+        $regex: searchTerm,
+        $options: "i",
+      },
     });
+  });
 
-    // ObjectId search support
-    if (Types.ObjectId.isValid(searchTerm)) {
-      orConditions.push({
-        _id: new Types.ObjectId(searchTerm),
-      } as FilterQuery<T>);
-    }
-
-    this.modelQuery = this.modelQuery.find({
-      $or: orConditions,
+  // ObjectId support
+  if (Types.ObjectId.isValid(searchTerm)) {
+    orConditions.push({
+      _id: new Types.ObjectId(searchTerm),
     });
-
-    return this;
   }
+
+  // 🔥 IMPORTANT: guard empty OR
+  if (orConditions.length === 0) return this;
+
+  this.modelQuery = this.modelQuery.find({
+    $or: orConditions,
+  });
+
+  return this;
+}
 
   // FILTER (fully generic)
  filter() {

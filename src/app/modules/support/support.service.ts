@@ -152,11 +152,11 @@ const support = async (id: string, payload: TSupport) => {
 const getAllSupportsFromDB = async (query: any) => {
   const baseQuery = Support.find().populate({
     path: "userId",
-    select: "_id firstName lastName email phone role profileImage",
+    select: "_id name email phone role profileImage",
   });
 
   const queryBuilder = new QueryBuilder(baseQuery, query)
-    .search(["name email subject userId"])
+    .search(["name", "email", "phone", "subject"])
     .sort()
     .fields()
     .filter()
@@ -167,7 +167,10 @@ const getAllSupportsFromDB = async (query: any) => {
   const meta = await queryBuilder.countTotal();
 
   if (!supports || supports.length === 0) {
-    throw new ApiError(404, "Supports data are not found in the database");
+    return {
+      data: [],
+      meta,
+    };
   }
 
   return {
@@ -179,11 +182,11 @@ const getAllSupportsFromDB = async (query: any) => {
 const getSupportByIdFromDB = async (id: string) => {
   const support = await Support.findById(id).populate({
     path: "userId",
-    select: "firstName lastName role profileImage email _id phone",
+    select: "name email phone role profileImage",
   });
 
   if (!support) {
-    throw new ApiError(404, "No support is found by this ID");
+    return {};
   }
 
   return support;
