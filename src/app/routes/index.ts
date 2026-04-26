@@ -12,6 +12,7 @@ import { BannerRoutes } from "../modules/banner/banner.route";
 import { LotteryRoutes } from "../modules/lottery/lottery.route";
 import { SettingsRoutes } from "../modules/settings/settings.route";
 import { LotteryParticipantRoutes } from "../modules/participant/participant.route";
+import { AnalyticsRoutes } from "../modules/analytics/analytics.route";
 
 const router = express.Router();
 
@@ -69,6 +70,10 @@ const apiRoutes = [
   {
     path: "/settings",
     route: SettingsRoutes,
+  },
+  {
+    path: "/analytics",
+    route: AnalyticsRoutes,
   },
 ];
 
