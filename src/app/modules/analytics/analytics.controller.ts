@@ -11,6 +11,16 @@ const getFinanceAndPaymentsStats = catchAsync(async (req, res) => {
     })
 })
 
+const getAdminDashboardStats = catchAsync(async (req, res) => {
+    const result = await AnalyticsServices.getAdminDashboardStatsFromDB();
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        data: result,
+    })
+})
+
 export const AnalyticsControllers={
     getFinanceAndPaymentsStats,
+    getAdminDashboardStats,
 }
