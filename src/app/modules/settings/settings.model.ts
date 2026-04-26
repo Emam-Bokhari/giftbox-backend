@@ -13,7 +13,7 @@ const paymentNumberSchema = new Schema(
       trim: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const settingsSchema = new Schema(
@@ -31,7 +31,7 @@ const settingsSchema = new Schema(
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
 export const Settings = model("Settings", settingsSchema);

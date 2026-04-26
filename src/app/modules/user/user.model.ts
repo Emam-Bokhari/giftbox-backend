@@ -296,7 +296,7 @@ const userSchema = new Schema<IUser, UserModal>(
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
 /* ================= INDEX ================= */
@@ -317,7 +317,7 @@ userSchema.statics.isExistUserByPhone = async function (phone: string) {
 
 userSchema.statics.isMatchPassword = async function (
   password: string,
-  hashPassword: string
+  hashPassword: string,
 ) {
   return await bcrypt.compare(password, hashPassword);
 };
@@ -329,7 +329,7 @@ userSchema.pre("save", async function (next) {
   if (this.password) {
     this.password = await bcrypt.hash(
       this.password,
-      Number(config.bcrypt_salt_rounds)
+      Number(config.bcrypt_salt_rounds),
     );
   }
 

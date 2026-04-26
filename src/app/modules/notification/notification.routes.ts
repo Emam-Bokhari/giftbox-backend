@@ -6,14 +6,8 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(
-    auth(USER_ROLES.USER),
-    NotificationController.getNotificationFromDB,
-  )
-  .patch(
-    auth(USER_ROLES.USER),
-    NotificationController.readNotification,
-  );
+  .get(auth(USER_ROLES.USER), NotificationController.getNotificationFromDB)
+  .patch(auth(USER_ROLES.USER), NotificationController.readNotification);
 
 router.get(
   "/recent",

@@ -79,8 +79,6 @@ class QueryBuilder<T> {
   //     }
   //   });
 
-
-
   //   if (Object.keys(finalFilter).length > 0) {
   //     this.modelQuery = this.modelQuery.find(finalFilter);
   //   }
@@ -90,13 +88,7 @@ class QueryBuilder<T> {
   filter() {
     const queryObj = { ...this.query };
 
-    const excludeFields = [
-      "searchTerm",
-      "sort",
-      "limit",
-      "page",
-      "fields",
-    ];
+    const excludeFields = ["searchTerm", "sort", "limit", "page", "fields"];
 
     excludeFields.forEach((el) => delete queryObj[el]);
 

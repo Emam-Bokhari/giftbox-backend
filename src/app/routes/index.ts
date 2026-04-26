@@ -17,8 +17,6 @@ import { WinnerRoutes } from "../modules/winner/winner.route";
 
 const router = express.Router();
 
-
-
 const apiRoutes = [
   {
     path: "/users",

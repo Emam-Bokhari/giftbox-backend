@@ -12,7 +12,7 @@ const getFinanceAndPaymentsStatsFromDB = async (query: any) => {
 
   const now = new Date();
 
-// only appply filter not all
+  // only appply filter not all
   if (filterType === "thisWeek") {
     dateFilter = {
       createdAt: { $gte: new Date(now.setDate(now.getDate() - 7)) },
@@ -46,23 +46,21 @@ const getFinanceAndPaymentsStatsFromDB = async (query: any) => {
   const totalParticipations = allParticipations.length;
 
   const approvedParticipants = allParticipations.filter(
-    (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED
+    (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED,
   );
 
   const totalRevenue = approvedParticipants.reduce(
     (sum, p) => sum + (p.amount || 0),
-    0
+    0,
   );
 
   const totalTicketsValue = allParticipations.reduce(
     (sum, p) => sum + (p.amount || 0),
-    0
+    0,
   );
 
   const averageTicketPrice =
-    totalParticipations > 0
-      ? totalTicketsValue / totalParticipations
-      : 0;
+    totalParticipations > 0 ? totalTicketsValue / totalParticipations : 0;
 
   return {
     filter: filterType,
@@ -73,58 +71,54 @@ const getFinanceAndPaymentsStatsFromDB = async (query: any) => {
 };
 
 const getAdminDashboardStatsFromDB = async () => {
-  const [
-    totalUsers,
-    totalDrawCompleted,
-    pendingPayments,
-    ticketStats,
-  ] = await Promise.all([
-    //  total users
-    User.countDocuments({
-      role: USER_ROLES.USER,
-      verified: true,
-    }),
+  const [totalUsers, totalDrawCompleted, pendingPayments, ticketStats] =
+    await Promise.all([
+      //  total users
+      User.countDocuments({
+        role: USER_ROLES.USER,
+        verified: true,
+      }),
 
-    //  total draw completed
-    Lottery.countDocuments({
-      status: LOTTERY_STATUS.DRAWN,
-    }),
+      //  total draw completed
+      Lottery.countDocuments({
+        status: LOTTERY_STATUS.DRAWN,
+      }),
 
-    //  total pending payments
-    LotteryParticipant.countDocuments({
-      status: LOTTERY_PARTICIPANT_STATUS.PENDING,
-    }),
+      //  total pending payments
+      LotteryParticipant.countDocuments({
+        status: LOTTERY_PARTICIPANT_STATUS.PENDING,
+      }),
 
-    //  total tickets sold + total revenue
-    LotteryParticipant.aggregate([
-      {
-        $match: {
-          status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+      //  total tickets sold + total revenue
+      LotteryParticipant.aggregate([
+        {
+          $match: {
+            status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+          },
         },
-      },
-      {
-        $lookup: {
-          from: "lotteries",
-          localField: "lotteryId",
-          foreignField: "_id",
-          as: "lottery",
+        {
+          $lookup: {
+            from: "lotteries",
+            localField: "lotteryId",
+            foreignField: "_id",
+            as: "lottery",
+          },
         },
-      },
-      { $unwind: "$lottery" },
+        { $unwind: "$lottery" },
 
-      {
-        $group: {
-          _id: null,
-          totalTicketsSold: { $sum: 1 },
-          totalRevenue: {
-            $sum: {
-              $ifNull: ["$amount", "$lottery.ticketPrice"],
+        {
+          $group: {
+            _id: null,
+            totalTicketsSold: { $sum: 1 },
+            totalRevenue: {
+              $sum: {
+                $ifNull: ["$amount", "$lottery.ticketPrice"],
+              },
             },
           },
         },
-      },
-    ]),
-  ]);
+      ]),
+    ]);
 
   const totalTicketsSold = ticketStats[0]?.totalTicketsSold || 0;
   const totalRevenue = ticketStats[0]?.totalRevenue || 0;
@@ -145,7 +139,6 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
 
   const startDate = new Date(`${targetYear}-01-01T00:00:00.000Z`);
   const endDate = new Date(`${targetYear}-12-31T23:59:59.999Z`);
-
 
   const ticketStats = await LotteryParticipant.aggregate([
     {
@@ -179,7 +172,6 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
     },
   ]);
 
-
   const ticketMap: Record<number, number> = {};
   const userMap: Record<number, number> = {};
 
@@ -191,10 +183,19 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
     userMap[u._id] = u.totalUsers;
   });
 
-
   const monthNames = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
 
   const data = monthNames.map((name, index) => {
@@ -230,7 +231,6 @@ const getYearlyRevenueStatsFromDB = async (year?: number) => {
       },
     },
 
-
     {
       $lookup: {
         from: "lotteries",
@@ -262,17 +262,25 @@ const getYearlyRevenueStatsFromDB = async (year?: number) => {
     },
   ]);
 
-
   const revenueMap: Record<number, number> = {};
 
   stats.forEach((item) => {
     revenueMap[item.month] = item.totalRevenue;
   });
 
-
   const monthNames = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
 
   const data = monthNames.map((name, index) => {
@@ -290,10 +298,9 @@ const getYearlyRevenueStatsFromDB = async (year?: number) => {
   };
 };
 
-
 export const AnalyticsServices = {
   getFinanceAndPaymentsStatsFromDB,
   getAdminDashboardStatsFromDB,
   getYearlyTicketStatsFromDB,
   getYearlyRevenueStatsFromDB,
-}
+};

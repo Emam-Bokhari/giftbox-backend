@@ -80,7 +80,6 @@ const identifierSchema = z
   .min(3)
   .max(100);
 
-
 const passwordSchema = z
   .string({ required_error: "Password is required" })
   .min(6)
@@ -88,7 +87,6 @@ const passwordSchema = z
   .regex(/[A-Z]/, "Must contain uppercase letter")
   .regex(/[a-z]/, "Must contain lowercase letter")
   .regex(/[0-9]/, "Must contain number");
-
 
 const createVerifyOtpZodSchema = z.object({
   body: z.object({
@@ -101,7 +99,6 @@ const createVerifyOtpZodSchema = z.object({
   }),
 });
 
-
 const createLoginZodSchema = z.object({
   body: z.object({
     identifier: identifierSchema,
@@ -113,13 +110,11 @@ const createLoginZodSchema = z.object({
   }),
 });
 
-
 const createForgetPasswordZodSchema = z.object({
   body: z.object({
     identifier: identifierSchema,
   }),
 });
-
 
 const createResetPasswordZodSchema = z.object({
   body: z
@@ -133,7 +128,6 @@ const createResetPasswordZodSchema = z.object({
     }),
 });
 
-
 const createChangePasswordZodSchema = z.object({
   body: z
     .object({
@@ -146,7 +140,6 @@ const createChangePasswordZodSchema = z.object({
       path: ["confirmPassword"],
     }),
 });
-
 
 const createResendOtpZodSchema = z.object({
   body: z.object({

@@ -168,13 +168,10 @@ const createUserZodSchema = z.object({
 
       location: locationSchema.optional(),
     })
-    .refine(
-      (data) => data.email || data.phone,
-      {
-        message: "Either email or phone is required",
-        path: ["email"],
-      }
-    ),
+    .refine((data) => data.email || data.phone, {
+      message: "Either email or phone is required",
+      path: ["email"],
+    }),
 });
 
 /* ================= UPDATE USER ================= */

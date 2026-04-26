@@ -130,7 +130,6 @@ import { JwtPayload } from "jsonwebtoken";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 
-
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.loginUserFromDB(req.body);
 
@@ -142,7 +141,6 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const forgetPassword = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.forgetPasswordToDB(req.body.identifier);
 
@@ -153,7 +151,6 @@ const forgetPassword = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
 
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const token = req.headers.resettoken as string;
@@ -168,12 +165,8 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const changePassword = catchAsync(async (req: Request, res: Response) => {
-  await AuthService.changePasswordToDB(
-    req.user as JwtPayload,
-    req.body
-  );
+  await AuthService.changePasswordToDB(req.user as JwtPayload, req.body);
 
   sendResponse(res, {
     success: true,
@@ -182,7 +175,6 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
     data: null,
   });
 });
-
 
 const newAccessToken = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.newAccessTokenToUser(req.body.token);
@@ -194,7 +186,6 @@ const newAccessToken = catchAsync(async (req: Request, res: Response) => {
     data: result.accessToken,
   });
 });
-
 
 const resendOtp = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.resendOtpToDB(req.body);
@@ -210,7 +201,7 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.deleteUserFromDB(
     req.user as JwtPayload,
-    req.body.password
+    req.body.password,
   );
 
   sendResponse(res, {
@@ -220,7 +211,6 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
     data: null,
   });
 });
-
 
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.verifyOtpToDB(req.body);
@@ -232,7 +222,6 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
 
 export const AuthController = {
   loginUser,

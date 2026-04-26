@@ -35,9 +35,8 @@ const lotteryWinnerSchema = new Schema<TLotteryWinner>(
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
-
 
 lotteryWinnerSchema.index({ lotteryId: 1, userId: 1 }, { unique: true });
 lotteryWinnerSchema.index({ lotteryId: 1 });
@@ -45,5 +44,5 @@ lotteryWinnerSchema.index({ userId: 1 });
 
 export const LotteryWinner = model<TLotteryWinner>(
   "LotteryWinner",
-  lotteryWinnerSchema
+  lotteryWinnerSchema,
 );

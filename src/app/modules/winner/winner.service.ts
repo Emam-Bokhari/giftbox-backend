@@ -10,7 +10,10 @@ import QueryBuilder from "../../builder/queryBuilder";
 import { User } from "../user/user.model";
 import { USER_ROLES } from "../../../enums/user";
 import { notificationHelper } from "../../builder/pushNotification";
-import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
+import {
+  NOTIFICATION_REFERENCE_MODEL,
+  NOTIFICATION_TYPE,
+} from "../notification/notification.constant";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
 
 // secure shuffle
@@ -124,7 +127,6 @@ const drawRandomWinners = (participants: any[], winnerCount: number) => {
 //   };
 // };
 
-
 const drawLotteryWinnersIntoDB = async (payload: {
   lotteryId: string;
   mode: WINNER_SELECTED_BY;
@@ -158,7 +160,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
   }
 
   const participantUserIds = approvedParticipants.map((p) =>
-    p.userId.toString()
+    p.userId.toString(),
   );
 
   let winners: { userId: any; rank: number }[] = [];
@@ -193,7 +195,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
       userId: w.userId,
       selectedBy: mode,
       rank: w.rank,
-    }))
+    })),
   );
 
   // fetch populated winners (fix)
@@ -239,7 +241,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
           referenceId: lottery._id.toString(),
           referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY,
         },
-      })
+      }),
     );
   }
 
@@ -254,7 +256,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
         referenceId: lottery._id.toString(),
         referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY,
       },
-    })
+    }),
   );
 
   // execute all notifications
@@ -316,7 +318,7 @@ const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
       const totalParticipants = participants.length;
 
       const approvedParticipants = participants.filter(
-        (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED
+        (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED,
       );
 
       const revenue = approvedParticipants.reduce((sum, p: any) => {
@@ -367,15 +369,15 @@ const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
           totalParticipants,
           approved: approvedParticipants.length,
           pending: participants.filter(
-            (p) => p.status === LOTTERY_PARTICIPANT_STATUS.PENDING
+            (p) => p.status === LOTTERY_PARTICIPANT_STATUS.PENDING,
           ).length,
           rejected: participants.filter(
-            (p) => p.status === LOTTERY_PARTICIPANT_STATUS.REJECTED
+            (p) => p.status === LOTTERY_PARTICIPANT_STATUS.REJECTED,
           ).length,
           revenue,
         },
       };
-    })
+    }),
   );
 
   return {
@@ -386,7 +388,7 @@ const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
 
 const getLotteryDrawHistoryByIdFromDB = async (
   lotteryId: string,
-  query: Record<string, unknown>
+  query: Record<string, unknown>,
 ) => {
   if (!lotteryId) {
     throw new ApiError(400, "Lottery ID is required");
@@ -404,10 +406,7 @@ const getLotteryDrawHistoryByIdFromDB = async (
     lotteryId,
   }).populate("userId", "name email phone city profileImage");
 
-  const participantQuery = new QueryBuilder(
-    participantBaseQuery,
-    query
-  )
+  const participantQuery = new QueryBuilder(participantBaseQuery, query)
     .search(["status"])
     .filter()
     .sort()
@@ -451,13 +450,12 @@ const getLotteryDrawHistoryByIdFromDB = async (
   });
 
   const approvedParticipants = allParticipants.filter(
-    (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED
+    (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED,
   );
 
   const totalParticipants = allParticipants.length;
 
-  const revenue =
-    approvedParticipants.length * (lottery.ticketPrice || 0);
+  const revenue = approvedParticipants.length * (lottery.ticketPrice || 0);
 
   // final response
   return {

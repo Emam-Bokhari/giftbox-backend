@@ -28,7 +28,7 @@ const getRuleByType = async (type: RULE_TYPE) => {
 
 const updateRule = async (type: RULE_TYPE, content: string) => {
   const result = await Rule.findOneAndUpdate(
-    { type:type.toUpperCase() },
+    { type: type.toUpperCase() },
     { content },
     { new: true },
   );
@@ -41,7 +41,7 @@ const updateRule = async (type: RULE_TYPE, content: string) => {
 };
 
 const deleteRule = async (type: RULE_TYPE) => {
-  const result = await Rule.findOneAndDelete({ type:type.toUpperCase() });
+  const result = await Rule.findOneAndDelete({ type: type.toUpperCase() });
   if (!result) {
     throw new ApiError(StatusCodes.NOT_FOUND, `${type} not found`);
   }

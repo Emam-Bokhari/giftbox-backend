@@ -13,13 +13,15 @@ import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 import bcrypt from "bcrypt";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
-import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
+import {
+  NOTIFICATION_REFERENCE_MODEL,
+  NOTIFICATION_TYPE,
+} from "../notification/notification.constant";
 import { twilioService } from "../twilioService/sendOtpWithVerify";
 import { normalizeIdentifier } from "../auth/auth.service";
 import { Types } from "mongoose";
 import { LotteryParticipant } from "../participant/participant.model";
 import { LotteryWinner } from "../winner/winner.model";
-
 
 // --- ADMIN SERVICES ---
 const createAdminToDB = async (payload: any): Promise<IUser> => {
@@ -182,7 +184,6 @@ const deleteAdminFromDB = async (id: any) => {
   return isExistAdmin;
 };
 
-
 // --- USER SERVICES ---
 
 const createUserToDB = async (payload: any) => {
@@ -191,17 +192,11 @@ const createUserToDB = async (payload: any) => {
   const identifier = email || phone;
 
   if (!identifier) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Email or phone is required"
-    );
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Email or phone is required");
   }
 
   if (!payload.city) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "City is required"
-    );
+    throw new ApiError(StatusCodes.BAD_REQUEST, "City is required");
   }
 
   /* ================= DUPLICATE CHECK ================= */
@@ -218,10 +213,7 @@ const createUserToDB = async (payload: any) => {
   const isExistUser = await User.findOne({ $or: orConditions });
 
   if (isExistUser) {
-    throw new ApiError(
-      StatusCodes.CONFLICT,
-      "Email or phone already exists"
-    );
+    throw new ApiError(StatusCodes.CONFLICT, "Email or phone already exists");
   }
 
   /* ================= CREATE USER ================= */
@@ -235,10 +227,7 @@ const createUserToDB = async (payload: any) => {
   });
 
   if (!createUser) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "Failed to create user"
-    );
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Failed to create user");
   }
 
   /* ================= OTP ================= */
@@ -262,15 +251,12 @@ const createUserToDB = async (payload: any) => {
     await emailHelper.sendEmail(template);
   } else if (createUser.phone) {
     if (!createUser.countryCode) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        "Country code is required"
-      );
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Country code is required");
     }
 
     await twilioService.sendOTPWithVerify(
       createUser.phone,
-      createUser.countryCode
+      createUser.countryCode,
     );
   }
 
@@ -283,7 +269,7 @@ const createUserToDB = async (payload: any) => {
       role: createUser.role,
     },
     config.jwt.jwt_secret as Secret,
-    config.jwt.jwt_expire_in as string
+    config.jwt.jwt_expire_in as string,
   );
 
   /* ================= ADMIN NOTIFICATION ================= */
@@ -344,10 +330,6 @@ const updateProfileToDB = async (
   });
   return updateDoc;
 };
-
-
-
-
 
 const getAllUsersFromDB = async (query: any) => {
   const baseQuery = User.find({

@@ -31,7 +31,7 @@ const createOrUpdateSettingsToDB = async (payload: TSettings) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
   } else {
     result = await Settings.create({
@@ -53,7 +53,7 @@ const getSettingsFromDB = async () => {
   return settings;
 };
 
-export const SettingsServices={
-    createOrUpdateSettingsToDB,
-    getSettingsFromDB,
-}
+export const SettingsServices = {
+  createOrUpdateSettingsToDB,
+  getSettingsFromDB,
+};

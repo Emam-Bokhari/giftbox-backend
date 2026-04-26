@@ -23,10 +23,7 @@ const requireAnyUser = auth(
 router
   .route("/profile")
   .get(requireAnyUser, UserController.getUserProfile)
-  .delete(
-    requireUser,
-    UserController.deleteProfile,
-  );
+  .delete(requireUser, UserController.deleteProfile);
 
 /* ---------------------------- ADMIN CREATE ------------------------------ */
 router.post(
@@ -39,7 +36,6 @@ router.post(
 /* ---------------------------- ADMINS LIST ------------------------------- */
 router.get("/admins", requireSuperAdmin, UserController.getAdmin);
 router.delete("/admins/:id", requireSuperAdmin, UserController.deleteAdmin);
-
 
 /* ---------------------------- USER CREATE & UPDATE ---------------------- */
 router

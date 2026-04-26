@@ -7,7 +7,6 @@ import sendResponse from "../../../shared/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
 import config from "../../../config";
 
-
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const userData = req.body;
@@ -21,7 +20,7 @@ const createUser = catchAsync(
         "Account created successfully. You can verify your account anytime using OTP.",
       data: result,
     });
-  }
+  },
 );
 
 // register admin
@@ -99,8 +98,6 @@ const updateProfile = catchAsync(async (req, res) => {
     data: result,
   });
 });
-
-
 
 const getAllUsers = catchAsync(async (req, res) => {
   const result = await UserService.getAllUsersFromDB(req.query);

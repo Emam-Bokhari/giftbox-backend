@@ -14,7 +14,7 @@ const createBannerToDB = async (payload: TBanner): Promise<TBanner> => {
   const createBanner: any = await Banner.create(payload);
   if (!createBanner) {
     // Safely unlink file only if path exists and is not empty
-    if (payload.image ) {
+    if (payload.image) {
       unlinkFile(payload.image);
     }
     throw new ApiError(400, "Failed to create banner");

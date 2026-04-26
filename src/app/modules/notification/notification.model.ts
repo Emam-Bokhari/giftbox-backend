@@ -1,6 +1,9 @@
 import { model, Schema } from "mongoose";
 import { INotification, NotificationModel } from "./notification.interface";
-import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "./notification.constant";
+import {
+  NOTIFICATION_REFERENCE_MODEL,
+  NOTIFICATION_TYPE,
+} from "./notification.constant";
 
 const notificationSchema = new Schema<INotification, NotificationModel>(
   {

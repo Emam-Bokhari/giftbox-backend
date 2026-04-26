@@ -5,7 +5,6 @@ export enum NOTIFICATION_TYPE {
   MESSAGE_NEW = "MESSAGE_NEW",
 }
 
-
 export enum NOTIFICATION_REFERENCE_MODEL {
   USER = "User",
   LOTTERY_WINNER = "LotteryWinner",

@@ -1,11 +1,7 @@
 import { Lottery } from "../app/modules/lottery/lottery.model";
 
-
 const findLastTicketId = async () => {
-  const lastTicket = await Lottery.findOne(
-    {},
-    { ticketNumber: 1, _id: 0 }
-  )
+  const lastTicket = await Lottery.findOne({}, { ticketNumber: 1, _id: 0 })
     .sort({ createdAt: -1 })
     .lean();
 
@@ -24,9 +20,7 @@ export const generateTicketId = async () => {
     const [, lastYear, lastNumber] = lastTicketId.split("-");
 
     if (lastYear === currentYear) {
-      currentId = (Number(lastNumber) + 1)
-        .toString()
-        .padStart(4, "0");
+      currentId = (Number(lastNumber) + 1).toString().padStart(4, "0");
     }
   }
 

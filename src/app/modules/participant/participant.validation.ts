@@ -9,8 +9,7 @@ export const createLotteryParticipantZodSchema = z.object({
       })
       .min(1, "Lottery ID cannot be empty"),
 
-    userId: z
-      .string().optional(),
+    userId: z.string().optional(),
 
     paymentProof: z
       .string({
@@ -33,7 +32,7 @@ const updateStatusZodSchema = z.object({
   }),
 });
 
-export const ParticipantValidationSchema={
-    createLotteryParticipantZodSchema,
-    updateStatusZodSchema,
-}
+export const ParticipantValidationSchema = {
+  createLotteryParticipantZodSchema,
+  updateStatusZodSchema,
+};

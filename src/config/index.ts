@@ -29,7 +29,6 @@ export default {
     projectId: process.env.FIREBASE_PROJECT_ID,
   },
 
-
   stripe: {
     stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,

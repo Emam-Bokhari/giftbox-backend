@@ -1,5 +1,8 @@
 import { Model, Types } from "mongoose";
-import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "./notification.constant";
+import {
+  NOTIFICATION_REFERENCE_MODEL,
+  NOTIFICATION_TYPE,
+} from "./notification.constant";
 
 export type INotification = {
   title: string;

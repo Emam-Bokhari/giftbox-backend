@@ -48,7 +48,6 @@ import { NOTIFICATION_TYPE } from "../notification/notification.constant";
 //         );
 //       }
 
-
 //       //  end Active Lottery
 
 //       const activeLotteries = await Lottery.find({
@@ -89,9 +88,7 @@ export const startLotteryScheduler = () => {
         startAt: { $lte: now },
       });
 
-      console.log(
-        `📌 Scheduled Lotteries Ready: ${scheduledLotteries.length}`
-      );
+      console.log(`📌 Scheduled Lotteries Ready: ${scheduledLotteries.length}`);
 
       // fetch admin once (performance optimization)
       const admin = await User.findOne({
@@ -105,7 +102,7 @@ export const startLotteryScheduler = () => {
 
         if (activeExists) {
           console.log(
-            `⚠️ Skipped Activation (Active exists) → Lottery ID: ${lottery._id}`
+            `⚠️ Skipped Activation (Active exists) → Lottery ID: ${lottery._id}`,
           );
           continue;
         }
@@ -115,7 +112,7 @@ export const startLotteryScheduler = () => {
         await lottery.save();
 
         console.log(
-          `✅ Activated Lottery → ID: ${lottery._id}, Title: ${lottery.title}`
+          `✅ Activated Lottery → ID: ${lottery._id}, Title: ${lottery.title}`,
         );
 
         /* ================= NOTIFICATION PAYLOAD ================= */
@@ -129,9 +126,7 @@ export const startLotteryScheduler = () => {
         };
 
         /* ================= GET USERS ================= */
-        const users = await User.find({})
-          .select("_id")
-          .lean();
+        const users = await User.find({}).select("_id").lean();
 
         const userIds = users.map((u) => u._id.toString());
 
@@ -153,16 +148,14 @@ export const startLotteryScheduler = () => {
         endAt: { $lte: now },
       });
 
-      console.log(
-        `📌 Active Lotteries to End: ${activeLotteries.length}`
-      );
+      console.log(`📌 Active Lotteries to End: ${activeLotteries.length}`);
 
       for (const lottery of activeLotteries) {
         lottery.status = LOTTERY_STATUS.ENDED;
         await lottery.save();
 
         console.log(
-          `🔴 Ended Lottery → ID: ${lottery._id}, Title: ${lottery.title}`
+          `🔴 Ended Lottery → ID: ${lottery._id}, Title: ${lottery.title}`,
         );
       }
 

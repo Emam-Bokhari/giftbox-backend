@@ -13,7 +13,6 @@ const app: Application = express();
 app.set("views", path.join(__dirname, "..", "views"));
 app.set("view engine", "ejs");
 
-
 // morgan
 app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
@@ -21,9 +20,7 @@ app.use(Morgan.errorHandler);
 //body parser
 app.use(
   cors({
-    origin: [
-      "http://10.10.7.46:30011",
-    ],
+    origin: ["http://10.10.7.46:30011"],
     credentials: true,
   }),
 );

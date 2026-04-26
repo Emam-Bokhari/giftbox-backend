@@ -7,7 +7,10 @@ import { TLotteryParticipant } from "./participant.interface";
 import QueryBuilder from "../../builder/queryBuilder";
 import { LOTTERY_PARTICIPANT_STATUS } from "./participant.constant";
 import { notificationHelper } from "../../builder/pushNotification";
-import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
+import {
+  NOTIFICATION_REFERENCE_MODEL,
+  NOTIFICATION_TYPE,
+} from "../notification/notification.constant";
 import { User } from "../user/user.model";
 import { USER_ROLES } from "../../../enums/user";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
@@ -74,7 +77,7 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
   if (lottery.status !== LOTTERY_STATUS.ACTIVE) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      "Only active lottery can be joined"
+      "Only active lottery can be joined",
     );
   }
 
@@ -84,10 +87,7 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
   });
 
   if (alreadyJoined) {
-    throw new ApiError(
-      StatusCodes.CONFLICT,
-      "You already joined this lottery"
-    );
+    throw new ApiError(StatusCodes.CONFLICT, "You already joined this lottery");
   }
 
   const participant = await LotteryParticipant.create({
@@ -97,24 +97,24 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
     amount: lottery.ticketPrice,
   });
 
- // notifications
+  // notifications
   const notifications: Promise<any>[] = [];
 
   // 1. admin notification
-    const admin = await User.findOne({
-          role: USER_ROLES.SUPER_ADMIN,
-      }).select("_id");
-  
-      if (admin) {
-          await sendNotifications({
-              title: "New Lottery Participation",
-              text: `A user just joined "${lottery.title}"`,
-              receiver: admin._id.toString(),
-              type: NOTIFICATION_TYPE.ADMIN,
-              referenceId: participant._id.toString(),
-              referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY_PARTICIPANT,
-          });
-      }
+  const admin = await User.findOne({
+    role: USER_ROLES.SUPER_ADMIN,
+  }).select("_id");
+
+  if (admin) {
+    await sendNotifications({
+      title: "New Lottery Participation",
+      text: `A user just joined "${lottery.title}"`,
+      receiver: admin._id.toString(),
+      type: NOTIFICATION_TYPE.ADMIN,
+      referenceId: participant._id.toString(),
+      referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY_PARTICIPANT,
+    });
+  }
 
   // 2. participant notification
   notifications.push(
@@ -125,7 +125,7 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
       data: {
         lotteryId: lottery._id.toString(),
       },
-    })
+    }),
   );
 
   await Promise.allSettled(notifications);
@@ -135,7 +135,7 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
 
 const getMyParticipatedLotteriesFromDB = async (
   userId: string,
-  query: Record<string, unknown>
+  query: Record<string, unknown>,
 ) => {
   if (!userId) {
     throw new ApiError(400, "User ID is required");
@@ -156,7 +156,6 @@ const getMyParticipatedLotteriesFromDB = async (
   const rawData = await participantQuery.modelQuery;
 
   const meta = await participantQuery.countTotal();
-
 
   const data = rawData.map((p: any) => ({
     participantId: p._id,
@@ -185,7 +184,7 @@ const getMyParticipatedLotteriesFromDB = async (
 
 const getMyParticipationDetailsFromDB = async (
   userId: string,
-  participantId: string
+  participantId: string,
 ) => {
   if (!userId) {
     throw new ApiError(400, "User ID is required");
@@ -194,7 +193,6 @@ const getMyParticipationDetailsFromDB = async (
   if (!participantId) {
     throw new ApiError(400, "Participant ID is required");
   }
-
 
   const participant = await LotteryParticipant.findOne({
     _id: participantId,
@@ -210,7 +208,6 @@ const getMyParticipationDetailsFromDB = async (
   }
 
   const lottery: any = participant.lotteryId;
-
 
   return {
     participantId: participant._id,
@@ -288,7 +285,7 @@ const getMyParticipationDetailsFromDB = async (
 
 const updateParticipantStatusIntoDB = async (
   id: string,
-  status: LOTTERY_PARTICIPANT_STATUS
+  status: LOTTERY_PARTICIPANT_STATUS,
 ) => {
   if (!id) {
     throw new ApiError(400, "Participant ID is required");
@@ -300,7 +297,7 @@ const updateParticipantStatusIntoDB = async (
 
   const participant = await LotteryParticipant.findById(id).populate(
     "userId",
-    "name"
+    "name",
   );
 
   if (!participant) {
@@ -325,7 +322,7 @@ const updateParticipantStatusIntoDB = async (
   if (!allowedTransitions.includes(transition)) {
     throw new ApiError(
       400,
-      `Invalid status transition: ${participant.status} → ${status}`
+      `Invalid status transition: ${participant.status} → ${status}`,
     );
   }
 
@@ -340,16 +337,16 @@ const updateParticipantStatusIntoDB = async (
     role: USER_ROLES.SUPER_ADMIN,
   }).select("_id");
 
-    if (admin) {
-        await sendNotifications({
-            title: "Lottery Participant Status Updated",
-            text: `Lottery "${participant.lotteryId}" has been ${status.toLowerCase()}`,
-            receiver: admin._id.toString(),
-            type: NOTIFICATION_TYPE.ADMIN,
-            referenceId: participant._id.toString(),
-            referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY_PARTICIPANT,
-        });
-    }
+  if (admin) {
+    await sendNotifications({
+      title: "Lottery Participant Status Updated",
+      text: `Lottery "${participant.lotteryId}" has been ${status.toLowerCase()}`,
+      receiver: admin._id.toString(),
+      type: NOTIFICATION_TYPE.ADMIN,
+      referenceId: participant._id.toString(),
+      referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY_PARTICIPANT,
+    });
+  }
 
   // 2. participant notification
   notifications.push(
@@ -367,7 +364,7 @@ const updateParticipantStatusIntoDB = async (
         participantId: participant._id.toString(),
         status,
       },
-    })
+    }),
   );
 
   await Promise.allSettled(notifications);

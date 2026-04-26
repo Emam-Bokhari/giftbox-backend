@@ -83,7 +83,6 @@ import rateLimit from "express-rate-limit";
 
 const router = express.Router();
 
-
 const otpLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 min
   max: 3,
@@ -93,63 +92,43 @@ const otpLimiter = rateLimit({
 router.post(
   "/login",
   validateRequest(AuthValidation.createLoginZodSchema),
-  AuthController.loginUser
+  AuthController.loginUser,
 );
-
 
 router.post(
   "/forget-password",
   validateRequest(AuthValidation.createForgetPasswordZodSchema),
-  AuthController.forgetPassword
+  AuthController.forgetPassword,
 );
 
-
-router.post(
-  "/reset-password",
-  AuthController.resetPassword
-);
+router.post("/reset-password", AuthController.resetPassword);
 
 router.post(
   "/change-password",
-  auth(
-    USER_ROLES.ADMIN,
-    USER_ROLES.USER,
-    USER_ROLES.SUPER_ADMIN
-  ),
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.SUPER_ADMIN),
   // validateRequest(AuthValidation.createChangePasswordZodSchema),
-  AuthController.changePassword
+  AuthController.changePassword,
 );
-
 
 router.post(
   "/verify-account",
   validateRequest(AuthValidation.createVerifyOtpZodSchema),
-  AuthController.verifyOtp
+  AuthController.verifyOtp,
 );
-
 
 router.post(
   "/resend-otp",
   otpLimiter,
   validateRequest(AuthValidation.createResendOtpZodSchema),
-  AuthController.resendOtp
+  AuthController.resendOtp,
 );
 
-
-router.post(
-  "/refresh-token",
-  AuthController.newAccessToken
-);
-
+router.post("/refresh-token", AuthController.newAccessToken);
 
 router.delete(
   "/delete-account",
-  auth(
-    USER_ROLES.ADMIN,
-    USER_ROLES.USER,
-    USER_ROLES.SUPER_ADMIN
-  ),
-  AuthController.deleteUser
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.SUPER_ADMIN),
+  AuthController.deleteUser,
 );
 
 export const AuthRoutes = router;

@@ -105,8 +105,6 @@
 //       throw new ApiError(400, "Country code or phone number missing for user");
 //     }
 
-
-
 //     await twilioService.sendOTPWithVerify(
 //       user.phone,
 //       user.countryCode
@@ -383,10 +381,8 @@ import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 import cryptoToken from "../../../util/cryptoToken";
 
-
 export const normalizeIdentifier = (value: string) =>
   value.trim().toLowerCase();
-
 
 const findUserByIdentifier = (identifier: string, selectPassword = false) => {
   const id = identifier.trim().toLowerCase();
@@ -399,7 +395,6 @@ const findUserByIdentifier = (identifier: string, selectPassword = false) => {
 
   return query;
 };
-
 
 const loginUserFromDB = async (payload: {
   identifier: string;
@@ -422,14 +417,13 @@ const loginUserFromDB = async (payload: {
       phone: user.phone,
     },
     config.jwt.jwt_secret as Secret,
-    config.jwt.jwt_expire_in as string
+    config.jwt.jwt_expire_in as string,
   );
 
   user.password = undefined as any;
 
   return { token, user };
 };
-
 
 const forgetPasswordToDB = async (identifier: string) => {
   const user = await findUserByIdentifier(identifier);
@@ -470,12 +464,9 @@ const forgetPasswordToDB = async (identifier: string) => {
 
 /* ================= VERIFY OTP (OPTIONAL FLOW) ================= */
 
-const verifyOtpToDB = async (payload: {
-  identifier: string;
-  code: string;
-}) => {
+const verifyOtpToDB = async (payload: { identifier: string; code: string }) => {
   const user = await findUserByIdentifier(payload.identifier).select(
-    "+authentication"
+    "+authentication",
   );
 
   if (!user) throw new ApiError(400, "User not found");
@@ -494,7 +485,6 @@ const verifyOtpToDB = async (payload: {
     throw new ApiError(400, "Invalid OTP");
   }
 
-
   if (!user.verified && !auth.isResetPassword) {
     user.verified = true;
 
@@ -509,7 +499,7 @@ const verifyOtpToDB = async (payload: {
         role: user.role,
       },
       config.jwt.jwt_secret as Secret,
-      config.jwt.jwt_expire_in as string
+      config.jwt.jwt_expire_in as string,
     );
 
     return {
@@ -518,7 +508,6 @@ const verifyOtpToDB = async (payload: {
       user,
     };
   }
-
 
   const resetToken = cryptoToken();
 
@@ -541,7 +530,6 @@ const verifyOtpToDB = async (payload: {
     resetToken,
   };
 };
-
 
 const resetPasswordToDB = async (
   token: string,
@@ -577,10 +565,7 @@ const resetPasswordToDB = async (
 
   // check password
   if (newPassword !== confirmPassword) {
-    throw new ApiError(
-      400,
-      "New password and Confirm password doesn't match!",
-    );
+    throw new ApiError(400, "New password and Confirm password doesn't match!");
   }
 
   const hashPassword = await bcrypt.hash(
@@ -597,8 +582,6 @@ const resetPasswordToDB = async (
     new: true,
   });
 };
-
-
 
 const changePasswordToDB = async (
   user: JwtPayload,
@@ -628,10 +611,7 @@ const changePasswordToDB = async (
 
   // new password and confirm password check
   if (newPassword !== confirmPassword) {
-    throw new ApiError(
-      400,
-      "Password and Confirm password doesn't matched",
-    );
+    throw new ApiError(400, "Password and Confirm password doesn't matched");
   }
 
   // hash password
@@ -647,13 +627,12 @@ const changePasswordToDB = async (
   await User.findOneAndUpdate({ _id: user.id }, updateData, { new: true });
 };
 
-
 const newAccessTokenToUser = async (refreshToken: string) => {
   if (!refreshToken) throw new ApiError(400, "Token required");
 
   const decoded = jwtHelper.verifyToken(
     refreshToken,
-    config.jwt.jwtRefreshSecret as Secret
+    config.jwt.jwtRefreshSecret as Secret,
   );
 
   const user = await User.findById(decoded.id);
@@ -668,12 +647,11 @@ const newAccessTokenToUser = async (refreshToken: string) => {
       email: user.email,
     },
     config.jwt.jwt_secret as Secret,
-    config.jwt.jwt_expire_in as string
+    config.jwt.jwt_expire_in as string,
   );
 
   return { accessToken };
 };
-
 
 const resendOtpToDB = async (payload: { identifier: string }) => {
   const user = await findUserByIdentifier(payload.identifier);
@@ -713,7 +691,6 @@ const resendOtpToDB = async (payload: { identifier: string }) => {
   return { message: "OTP sent to phone" };
 };
 
-
 const deleteUserFromDB = async (user: JwtPayload, password: string) => {
   const dbUser = await User.findById(user.id).select("+password");
 
@@ -727,7 +704,6 @@ const deleteUserFromDB = async (user: JwtPayload, password: string) => {
 
   return { message: "Account deleted successfully" };
 };
-
 
 export const AuthService = {
   loginUserFromDB,

@@ -11,11 +11,11 @@ const router = express.Router();
 router
   .route("/")
   .post(
-    auth(USER_ROLES.USER,USER_ROLES.ADMIN),
+    auth(USER_ROLES.USER, USER_ROLES.ADMIN),
     fileUploadHandler(),
-     parseAllFilesData({
-        fieldName: FOLDER_NAMES.ATTACHMENT,
-        forceSingle: true,
+    parseAllFilesData({
+      fieldName: FOLDER_NAMES.ATTACHMENT,
+      forceSingle: true,
     }),
     SupportControllers.submitSupportRequest,
   )

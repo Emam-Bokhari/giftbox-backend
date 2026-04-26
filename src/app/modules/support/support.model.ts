@@ -2,7 +2,6 @@ import { model, Schema } from "mongoose";
 import { TSupport } from "./support.interface";
 import { SUPPORT_STATUS } from "./support.constant";
 
-
 const supportSchema = new Schema<TSupport>(
   {
     userId: {

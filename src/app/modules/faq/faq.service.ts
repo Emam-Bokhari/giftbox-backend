@@ -16,7 +16,7 @@ const createFaqToDB = async (payload: TFaq) => {
 const faqsFromDB = async () => {
   const faqs = await Faq.find({});
   if (!faqs || faqs.length === 0) {
-   return [];
+    return [];
   }
   return faqs;
 };
@@ -29,7 +29,7 @@ const deleteFaqToDB = async (id: string) => {
   const result = await Faq.findByIdAndDelete(id);
 
   if (!result) {
-   return {};
+    return {};
   }
 
   return result;
