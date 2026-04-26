@@ -16,6 +16,9 @@ import { sendNotifications } from "../../../helpers/notificationsHelper";
 import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
 import { twilioService } from "../twilioService/sendOtpWithVerify";
 import { normalizeIdentifier } from "../auth/auth.service";
+import { Types } from "mongoose";
+import { LotteryParticipant } from "../participant/participant.model";
+import { LotteryWinner } from "../winner/winner.model";
 
 
 // --- ADMIN SERVICES ---
@@ -350,8 +353,9 @@ const updateProfileToDB = async (
 
 
 
+
 // const getAllUsersFromDB = async (query: any) => {
-//   // Base user query
+
 //   const baseQuery = User.find({
 //     role: USER_ROLES.USER,
 //     verified: true,
@@ -364,26 +368,40 @@ const updateProfileToDB = async (
 //     .filter()
 //     .paginate();
 
-//   // Fetch paginated users
+  
 //   const users = await queryBuilder.modelQuery;
 //   const meta = await queryBuilder.countTotal();
 
-//   if (!users || users.length === 0) {
-//     return {
-//       data: [],
-//       meta: {},
-//     };
-//   }
 
+//   const totalUsers = await User.countDocuments({
+//     role: USER_ROLES.USER,
+//     verified: true,
+//   });
+
+//   const activeUsers = await User.countDocuments({
+//     role: USER_ROLES.USER,
+//     verified: true,
+//     status: "ACTIVE",
+//   });
+
+//   const inactiveUsers = await User.countDocuments({
+//     role: USER_ROLES.USER,
+//     verified: true,
+//     status: "INACTIVE",
+//   });
 
 //   return {
 //     data: users,
 //     meta,
+//     stats: {
+//       totalUsers,
+//       activeUsers,
+//       inactiveUsers,
+//     },
 //   };
 // };
 
 const getAllUsersFromDB = async (query: any) => {
-
   const baseQuery = User.find({
     role: USER_ROLES.USER,
     verified: true,
@@ -396,11 +414,67 @@ const getAllUsersFromDB = async (query: any) => {
     .filter()
     .paginate();
 
-  
   const users = await queryBuilder.modelQuery;
   const meta = await queryBuilder.countTotal();
 
+  const userIds = users.map((u: any) => new Types.ObjectId(u._id));
 
+  /* ================= PARTICIPATION COUNT ================= */
+  const participationStats = await LotteryParticipant.aggregate([
+    {
+      $match: {
+        userId: { $in: userIds },
+      },
+    },
+    {
+      $group: {
+        _id: "$userId",
+        totalParticipated: { $sum: 1 },
+      },
+    },
+  ]);
+
+  /* ================= WIN COUNT ================= */
+  const winStats = await LotteryWinner.aggregate([
+    {
+      $match: {
+        userId: { $in: userIds },
+      },
+    },
+    {
+      $group: {
+        _id: "$userId",
+        totalWins: { $sum: 1 },
+      },
+    },
+  ]);
+
+  /* ================= MAP FOR FAST LOOKUP ================= */
+  const participationMap = new Map();
+  participationStats.forEach((p) => {
+    participationMap.set(p._id.toString(), p.totalParticipated);
+  });
+
+  const winMap = new Map();
+  winStats.forEach((w) => {
+    winMap.set(w._id.toString(), w.totalWins);
+  });
+
+  /* ================= FINAL MERGE ================= */
+  const enrichedUsers = users.map((user: any) => {
+    const id = user._id.toString();
+
+    return {
+      ...user.toObject(),
+
+      stats: {
+        totalParticipated: participationMap.get(id) || 0,
+        totalWins: winMap.get(id) || 0,
+      },
+    };
+  });
+
+  /* ================= GLOBAL STATS ================= */
   const totalUsers = await User.countDocuments({
     role: USER_ROLES.USER,
     verified: true,
@@ -419,7 +493,7 @@ const getAllUsersFromDB = async (query: any) => {
   });
 
   return {
-    data: users,
+    data: enrichedUsers,
     meta,
     stats: {
       totalUsers,
