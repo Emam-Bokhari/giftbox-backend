@@ -141,6 +141,7 @@ const createUserZodSchema = z.object({
       email: z.string().email().optional(),
       phone: z.string().optional(),
       countryCode: z.string().optional(),
+      dateOfBirth: z.date().optional(),
 
       password: z
         .string()
@@ -190,6 +191,7 @@ const updateUserZodSchema = z.object({
     email: z.string().email().optional(),
     phone: z.string().optional(),
     countryCode: z.string().optional(),
+    dateOfBirth: z.date().optional(),
 
     profileImage: z.string().optional(),
     coverImage: z.string().optional(),

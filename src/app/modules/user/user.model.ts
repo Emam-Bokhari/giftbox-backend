@@ -207,6 +207,11 @@ const userSchema = new Schema<IUser, UserModal>(
       default: "+223",
     },
 
+    dateOfBirth: {
+      type: Date,
+      default: null,
+    },
+
     /* ================= SECURITY ================= */
     password: {
       type: String,

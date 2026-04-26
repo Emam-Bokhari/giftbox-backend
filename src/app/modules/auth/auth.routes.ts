@@ -116,7 +116,7 @@ router.post(
     USER_ROLES.USER,
     USER_ROLES.SUPER_ADMIN
   ),
-  validateRequest(AuthValidation.createChangePasswordZodSchema),
+  // validateRequest(AuthValidation.createChangePasswordZodSchema),
   AuthController.changePassword
 );
 
