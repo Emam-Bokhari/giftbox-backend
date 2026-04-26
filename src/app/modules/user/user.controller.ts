@@ -7,24 +7,6 @@ import sendResponse from "../../../shared/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
 import config from "../../../config";
 
-// register user
-// const createUser = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const { ...userData } = req.body;
-
-//     console.log(userData, "payload");
-
-//     const result = await UserService.createUserToDB(userData);
-
-//     sendResponse(res, {
-//       success: true,
-//       statusCode: StatusCodes.OK,
-//       message:
-//         "Your account has been successfully created. Verify Your Email By OTP. Check your email",
-//       data: result,
-//     });
-//   },
-// );
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -127,8 +109,8 @@ const getAllUsers = catchAsync(async (req, res) => {
     success: true,
     statusCode: 200,
     message: "Successfully retrieved are users data",
-    data: result.data,
-    meta: result.meta,
+    data: result?.data || [],
+    meta: result?.meta || {},
   });
 });
 
