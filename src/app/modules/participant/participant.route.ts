@@ -29,6 +29,11 @@ router.route("/my-participated").get(
     ParticipantControllers.getMyParticipatedLotteries
 );
 
+router.get(
+  "/my-participations/:id",
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  ParticipantControllers.getMyParticipationDetails
+);
 
 
 export const LotteryParticipantRoutes = router;
