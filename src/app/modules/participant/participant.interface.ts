@@ -6,4 +6,7 @@ export type TLotteryParticipant = {
     userId: Schema.Types.ObjectId;
     paymentProof: string;
     status: LOTTERY_PARTICIPANT_STATUS;
+    createdAt: Date;
+    updatedAt: Date;
+    
 }

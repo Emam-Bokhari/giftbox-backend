@@ -33,6 +33,8 @@ const lotterySchema = new Schema<TLottery>(
             min: 0,
         },
 
+
+
         currency: {
             type: String,
             required: true,
@@ -60,6 +62,13 @@ const lotterySchema = new Schema<TLottery>(
         endAt: {
             type: Date,
             required: true,
+        },
+        createdAt: {
+            type: Date,
+        },
+
+        updatedAt: {
+            type: Date,
         },
     },
     {

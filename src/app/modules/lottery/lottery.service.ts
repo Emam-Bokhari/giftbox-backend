@@ -327,31 +327,113 @@ const deleteLotteryFromDB = async (id: string) => {
     return data;
 };
 
+// const getLotteryDashboardByIdFromDB = async (id: string) => {
+//     if (!id) {
+//         throw new ApiError(400, "Lottery ID is required");
+//     }
+
+//     // lottery details
+//     const lottery = await Lottery.findById(id);
+
+//     if (!lottery) {
+//         throw new ApiError(404, "Lottery not found");
+//     }
+
+//     // participants
+//     const participants = await LotteryParticipant.find({
+//         lotteryId: id,
+//     })
+//         .populate("userId", "name email phone profileImage")
+//         .sort({ createdAt: -1 });
+
+//     // payment proofs
+//     const paymentProofs = participants.map((p) => ({
+//         participantId: p._id,
+//         user: p.userId,
+//         paymentProof: p.paymentProof,
+//         status: p.status,
+//     }));
+
+//     // stats
+//     const totalParticipants = participants.length;
+
+//     const pending = participants.filter(
+//         (p) => p.status === "PENDING"
+//     ).length;
+
+//     const approved = participants.filter(
+//         (p) => p.status === "APPROVED"
+//     ).length;
+
+//     const rejected = participants.filter(
+//         (p) => p.status === "REJECTED"
+//     ).length;
+
+//     // revenue
+//     const revenue = participants
+//         .filter((p) => p.status === "APPROVED")
+//         .reduce((sum, _) => sum + lottery.ticketPrice, 0);
+
+//     return {
+//         lottery,
+//         participants,
+//         paymentProofs,
+//         stats: {
+//             totalParticipants,
+//             pending,
+//             approved,
+//             rejected,
+//             revenue,
+//         },
+//     };
+// };
+
 const getLotteryDashboardByIdFromDB = async (id: string) => {
     if (!id) {
         throw new ApiError(400, "Lottery ID is required");
     }
 
-    // lottery details
+    // lottery
     const lottery = await Lottery.findById(id);
 
     if (!lottery) {
         throw new ApiError(404, "Lottery not found");
     }
 
-    // participants
-    const participants = await LotteryParticipant.find({
+    // participants (only required fields)
+    const participantsRaw = await LotteryParticipant.find({
         lotteryId: id,
     })
-        .populate("userId", "name email phone profileImage")
+        .populate("userId", "name email profileImage phone city")
         .sort({ createdAt: -1 });
 
-    // payment proofs
-    const paymentProofs = participants.map((p) => ({
+    // participants clean shape
+    const participants = participantsRaw.map((p) => ({
+        _id: p._id,
+        lotteryId: p.lotteryId,
+        user: {
+            name: (p.userId as any)?.name,
+            email: (p.userId as any)?.email,
+            profileImage: (p.userId as any)?.profileImage,
+            phone: (p.userId as any)?.phone,
+            city: (p.userId as any)?.city,
+        },
+        status: p.status,
+        amount: lottery.ticketPrice,
+        createdAt: p.createdAt,
+    }));
+
+    // payment proofs (only name + email)
+    const paymentProofs = participantsRaw.map((p) => ({
         participantId: p._id,
-        user: p.userId,
+        user: {
+            name: (p.userId as any)?.name,
+            email: (p.userId as any)?.email,
+            profileImage: (p.userId as any)?.profileImage,
+        },
         paymentProof: p.paymentProof,
         status: p.status,
+        amount: lottery.ticketPrice,
     }));
 
     // stats
@@ -372,7 +454,7 @@ const getLotteryDashboardByIdFromDB = async (id: string) => {
     // revenue
     const revenue = participants
         .filter((p) => p.status === "APPROVED")
-        .reduce((sum, _) => sum + lottery.ticketPrice, 0);
+        .reduce((sum, p) => sum + p.amount, 0);
 
     return {
         lottery,
