@@ -146,63 +146,72 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
   const startDate = new Date(`${targetYear}-01-01T00:00:00.000Z`);
   const endDate = new Date(`${targetYear}-12-31T23:59:59.999Z`);
 
-  const stats = await LotteryParticipant.aggregate([
+
+  const ticketStats = await LotteryParticipant.aggregate([
     {
       $match: {
         status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
-        createdAt: {
-          $gte: startDate,
-          $lte: endDate,
-        },
+        createdAt: { $gte: startDate, $lte: endDate },
       },
     },
-
     {
       $group: {
         _id: { $month: "$createdAt" },
-
         totalTickets: { $sum: 1 },
-
-        users: { $addToSet: "$userId" },
-      },
-    },
-
-    {
-      $project: {
-        month: "$_id",
-        totalTickets: 1,
-        totalUsers: { $size: "$users" },
-        _id: 0,
       },
     },
   ]);
 
-  const monthsMap: Record<number, any> = {};
+  /* ================= USERS (ALL USERS CREATED) ================= */
+  const userStats = await User.aggregate([
+    {
+      $match: {
+        role: USER_ROLES.USER,
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
+    },
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        totalUsers: { $sum: 1 },
+      },
+    },
+  ]);
 
-  stats.forEach((item) => {
-    monthsMap[item.month] = item;
+
+  const ticketMap: Record<number, number> = {};
+  const userMap: Record<number, number> = {};
+
+  ticketStats.forEach((t) => {
+    ticketMap[t._id] = t.totalTickets;
   });
 
+  userStats.forEach((u) => {
+    userMap[u._id] = u.totalUsers;
+  });
+
+
   const monthNames = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec",
   ];
 
-  const formattedData = monthNames.map((name, index) => {
+  const data = monthNames.map((name, index) => {
     const monthIndex = index + 1;
 
     return {
       month: name,
-      totalTickets: monthsMap[monthIndex]?.totalTickets || 0,
-      totalUsers: monthsMap[monthIndex]?.totalUsers || 0,
+      totalTickets: ticketMap[monthIndex] || 0,
+      totalUsers: userMap[monthIndex] || 0,
     };
   });
 
   return {
     year: targetYear,
-    data: formattedData,
+    data,
   };
 };
+
 
 export const AnalyticsServices = {
     getFinanceAndPaymentsStatsFromDB,
