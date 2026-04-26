@@ -25,7 +25,7 @@ const getActiveLottery = catchAsync(async (req, res) => {
 })
 
 const getLotteryById = catchAsync(async (req, res) => {
-    const {id} = req.params;
+    const { id } = req.params;
     const lottery = await LotteryServices.getLotteryByIdFromDB(id);
     sendResponse(res, {
         statusCode: 200,
@@ -47,7 +47,7 @@ const getAllLotteries = catchAsync(async (req, res) => {
 })
 
 const getSingleLottery = catchAsync(async (req, res) => {
-    const {id} = req.params;
+    const { id } = req.params;
     const lottery = await LotteryServices.getSingleLotteryFromDB(id);
     sendResponse(res, {
         statusCode: 200,
@@ -58,7 +58,7 @@ const getSingleLottery = catchAsync(async (req, res) => {
 })
 
 const updateLottery = catchAsync(async (req, res) => {
-    const {id} = req.params;
+    const { id } = req.params;
     const result = await LotteryServices.updateLotteryIntoDB(id, req.body);
     sendResponse(res, {
         statusCode: 200,
@@ -69,8 +69,8 @@ const updateLottery = catchAsync(async (req, res) => {
 })
 
 const updateLotteryStatus = catchAsync(async (req, res) => {
-    const {id} = req.params;
-    const {status} = req.body;
+    const { id } = req.params;
+    const { status } = req.body;
     const result = await LotteryServices.updateLotteryStatusIntoDB(id, status);
     sendResponse(res, {
         statusCode: 200,
@@ -84,7 +84,7 @@ const updateLotteryStatus = catchAsync(async (req, res) => {
 
 
 const deleteLottery = catchAsync(async (req, res) => {
-    const {id} = req.params;
+    const { id } = req.params;
     const result = await LotteryServices.deleteLotteryFromDB(id);
     sendResponse(res, {
         statusCode: 200,
@@ -95,19 +95,20 @@ const deleteLottery = catchAsync(async (req, res) => {
 })
 
 const getLotteryDashboardById = catchAsync(
-  async (req, res) => {
-    const { id } = req.params;
+    async (req, res) => {
+        const { id } = req.params;
+        
 
-    const result =
-      await LotteryServices.getLotteryDashboardByIdFromDB(id);
+        const result =
+            await LotteryServices.getLotteryDashboardByIdFromDB(id, req.query);
 
-    sendResponse(res, {
-      success: true,
-      statusCode: 200,
-      message: "Lottery dashboard fetched successfully",
-      data: result,
-    });
-  }
+        sendResponse(res, {
+            success: true,
+            statusCode: 200,
+            message: "Lottery dashboard fetched successfully",
+            data: result,
+        });
+    }
 );
 
 

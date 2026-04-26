@@ -327,139 +327,122 @@ const deleteLotteryFromDB = async (id: string) => {
     return data;
 };
 
-// const getLotteryDashboardByIdFromDB = async (id: string) => {
-//     if (!id) {
-//         throw new ApiError(400, "Lottery ID is required");
-//     }
 
-//     // lottery details
-//     const lottery = await Lottery.findById(id);
-
-//     if (!lottery) {
-//         throw new ApiError(404, "Lottery not found");
-//     }
-
-//     // participants
-//     const participants = await LotteryParticipant.find({
-//         lotteryId: id,
-//     })
-//         .populate("userId", "name email phone profileImage")
-//         .sort({ createdAt: -1 });
-
-//     // payment proofs
-//     const paymentProofs = participants.map((p) => ({
-//         participantId: p._id,
-//         user: p.userId,
-//         paymentProof: p.paymentProof,
-//         status: p.status,
-//     }));
-
-//     // stats
-//     const totalParticipants = participants.length;
-
-//     const pending = participants.filter(
-//         (p) => p.status === "PENDING"
-//     ).length;
-
-//     const approved = participants.filter(
-//         (p) => p.status === "APPROVED"
-//     ).length;
-
-//     const rejected = participants.filter(
-//         (p) => p.status === "REJECTED"
-//     ).length;
-
-//     // revenue
-//     const revenue = participants
-//         .filter((p) => p.status === "APPROVED")
-//         .reduce((sum, _) => sum + lottery.ticketPrice, 0);
-
-//     return {
-//         lottery,
-//         participants,
-//         paymentProofs,
-//         stats: {
-//             totalParticipants,
-//             pending,
-//             approved,
-//             rejected,
-//             revenue,
-//         },
-//     };
-// };
-
-const getLotteryDashboardByIdFromDB = async (id: string) => {
+const getLotteryDashboardByIdFromDB = async (
+    id: string,
+    query: any
+) => {
     if (!id) {
         throw new ApiError(400, "Lottery ID is required");
     }
 
-    // lottery
     const lottery = await Lottery.findById(id);
 
     if (!lottery) {
         throw new ApiError(404, "Lottery not found");
     }
 
-    // participants (only required fields)
-    const participantsRaw = await LotteryParticipant.find({
-        lotteryId: id,
-    })
-        .populate("userId", "name email profileImage phone city")
-        .sort({ createdAt: -1 });
+    // participants query
+    const participantsQuery = new QueryBuilder(
+        LotteryParticipant.find({ lotteryId: id }).populate(
+            "userId",
+            "name email phone city"
+        ),
+        query
+    )
+        .search(["status"])
+        .filter()
+        .sort()
+        .paginate()
+        .fields();
 
-    // participants clean shape
-    const participants = participantsRaw.map((p) => ({
+    const participantsRaw = await participantsQuery.modelQuery;
+
+    const participantsMeta = await participantsQuery.countTotal();
+
+    const participants = participantsRaw.map((p: any) => ({
         _id: p._id,
-        lotteryId: p.lotteryId,
         user: {
-            name: (p.userId as any)?.name,
-            email: (p.userId as any)?.email,
-            profileImage: (p.userId as any)?.profileImage,
-            phone: (p.userId as any)?.phone,
-            city: (p.userId as any)?.city,
+            name: p.userId?.name,
+            email: p.userId?.email,
+            phone: p.userId?.phone,
+            city: p.userId?.city,
         },
         status: p.status,
         amount: lottery.ticketPrice,
         createdAt: p.createdAt,
     }));
 
-    // payment proofs (only name + email)
-    const paymentProofs = participantsRaw.map((p) => ({
+
+    // payment proofs
+
+    const proofQuery = new QueryBuilder(
+        LotteryParticipant.find({ lotteryId: id }).populate(
+            "userId",
+            "name email"
+        ),
+        query
+    )
+        .search(["status"])
+        .filter()
+        .sort()
+        .paginate()
+        .fields();
+
+    const proofsRaw = await proofQuery.modelQuery;
+
+    const proofMeta = await proofQuery.countTotal();
+
+    const paymentProofs = proofsRaw.map((p: any) => ({
         participantId: p._id,
         user: {
-            name: (p.userId as any)?.name,
-            email: (p.userId as any)?.email,
-            profileImage: (p.userId as any)?.profileImage,
+            name: p.userId?.name,
+            email: p.userId?.email,
         },
         paymentProof: p.paymentProof,
         status: p.status,
         amount: lottery.ticketPrice,
     }));
 
-    // stats
-    const totalParticipants = participants.length;
+    // status
 
-    const pending = participants.filter(
-        (p) => p.status === "PENDING"
-    ).length;
+    const statsAgg = await LotteryParticipant.aggregate([
+        { $match: { lotteryId: lottery._id } },
+        {
+            $group: {
+                _id: "$status",
+                count: { $sum: 1 },
+            },
+        },
+    ]);
 
-    const approved = participants.filter(
-        (p) => p.status === "APPROVED"
-    ).length;
+    let pending = 0,
+        approved = 0,
+        rejected = 0;
 
-    const rejected = participants.filter(
-        (p) => p.status === "REJECTED"
-    ).length;
+    statsAgg.forEach((s) => {
+        if (s._id === "PENDING") pending = s.count;
+        if (s._id === "APPROVED") approved = s.count;
+        if (s._id === "REJECTED") rejected = s.count;
+    });
 
-    // revenue
-    const revenue = participants
-        .filter((p) => p.status === "APPROVED")
-        .reduce((sum, p) => sum + p.amount, 0);
+    const totalParticipants = pending + approved + rejected;
+
+    const revenue = approved * lottery.ticketPrice;
 
     return {
         lottery,
-        participants,
-        paymentProofs,
+
+        participants: {
+            meta: participantsMeta,
+            data: participants,
+        },
+
+        paymentProofs: {
+            meta: proofMeta,
+            data: paymentProofs,
+        },
+
         stats: {
             totalParticipants,
             pending,
