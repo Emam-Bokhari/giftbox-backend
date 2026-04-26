@@ -221,20 +221,24 @@ const drawLotteryWinnersIntoDB = async (payload: {
       receiver: admin._id.toString(),
       type: NOTIFICATION_TYPE.ADMIN,
       referenceId: lottery._id.toString(),
-      referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY_WINNER,
+      referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY,
     });
   }
 
   /* ================= 2. WINNERS ================= */
   for (const winner of populatedWinners) {
+    if (!winner.userId) continue;
+
     notifications.push(
-      notificationHelper.sendToUser(winner.userId.toString(), {
+      notificationHelper.sendToUser((winner.userId as any)._id.toString(), {
         title: "🎉 You Won!",
         body: `Congratulations! You’ve won in "${lottery.title}". 🎉`,
         type: NOTIFICATION_TYPE.USER,
         data: {
           lotteryId: lottery._id.toString(),
           rank: String(winner.rank),
+          referenceId: lottery._id.toString(),
+          referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY,
         },
       })
     );
@@ -248,6 +252,8 @@ const drawLotteryWinnersIntoDB = async (payload: {
       type: NOTIFICATION_TYPE.USER,
       data: {
         lotteryId: lottery._id.toString(),
+        referenceId: lottery._id.toString(),
+        referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY,
       },
     })
   );
