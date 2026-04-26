@@ -31,10 +31,22 @@ const getYearlyTicketStats = catchAsync(async (req, res) => {
     })
 })
 
+const getYearlyRevenueStats = catchAsync(async (req, res) => {
+    const { year } = req.query;
+    const yearNumber = Number(year);
+    const result = await AnalyticsServices.getYearlyRevenueStatsFromDB(yearNumber);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        data: result,
+    })
+})
+
 
 
 export const AnalyticsControllers = {
     getFinanceAndPaymentsStats,
     getAdminDashboardStats,
     getYearlyTicketStats,
+    getYearlyRevenueStats,
 }

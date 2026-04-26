@@ -212,9 +212,87 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
   };
 };
 
+const getYearlyRevenueStatsFromDB = async (year?: number) => {
+  const targetYear = year || new Date().getFullYear();
+
+  const startDate = new Date(`${targetYear}-01-01T00:00:00.000Z`);
+  const endDate = new Date(`${targetYear}-12-31T23:59:59.999Z`);
+
+  const stats = await LotteryParticipant.aggregate([
+    {
+      $match: {
+        status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+        createdAt: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      },
+    },
+
+
+    {
+      $lookup: {
+        from: "lotteries",
+        localField: "lotteryId",
+        foreignField: "_id",
+        as: "lottery",
+      },
+    },
+    { $unwind: "$lottery" },
+
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+
+        totalRevenue: {
+          $sum: {
+            $ifNull: ["$amount", "$lottery.ticketPrice"],
+          },
+        },
+      },
+    },
+
+    {
+      $project: {
+        month: "$_id",
+        totalRevenue: 1,
+        _id: 0,
+      },
+    },
+  ]);
+
+
+  const revenueMap: Record<number, number> = {};
+
+  stats.forEach((item) => {
+    revenueMap[item.month] = item.totalRevenue;
+  });
+
+
+  const monthNames = [
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec",
+  ];
+
+  const data = monthNames.map((name, index) => {
+    const monthIndex = index + 1;
+
+    return {
+      month: name,
+      totalRevenue: revenueMap[monthIndex] || 0,
+    };
+  });
+
+  return {
+    year: targetYear,
+    data,
+  };
+};
+
 
 export const AnalyticsServices = {
     getFinanceAndPaymentsStatsFromDB,
     getAdminDashboardStatsFromDB,
     getYearlyTicketStatsFromDB,
+    getYearlyRevenueStatsFromDB,
 }
