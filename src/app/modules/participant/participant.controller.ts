@@ -18,8 +18,26 @@ const createParticipant = catchAsync(async (req, res) => {
     });
 });
 
+const getMyParticipatedLotteries = catchAsync(
+  async (req, res) => {
+    const userId = req.user?.id;
 
+    const result =
+      await LotteryParticipantServices.getMyParticipatedLotteriesFromDB(
+        userId,
+        req.query
+      );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "My participated lotteries fetched successfully",
+      data: result,
+    });
+  }
+);
 
 export const ParticipantControllers = {
     createParticipant,
+    getMyParticipatedLotteries,
 }
