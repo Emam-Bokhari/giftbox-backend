@@ -120,7 +120,7 @@ const getMyParticipationDetailsFromDB = async (
   }).populate({
     path: "lotteryId",
     select:
-      "title description banner ticketPrice status mode startAt endAt",
+      "title description banner ticketPrice ticketNumber status mode startAt endAt",
   });
 
   if (!participant) {
@@ -142,6 +142,7 @@ const getMyParticipationDetailsFromDB = async (
       description: lottery?.description,
       banner: lottery?.banner,
       ticketPrice: lottery?.ticketPrice,
+      ticketNumber: lottery?.ticketNumber,
       status: lottery?.status,
       mode: lottery?.mode,
       startAt: lottery?.startAt,
