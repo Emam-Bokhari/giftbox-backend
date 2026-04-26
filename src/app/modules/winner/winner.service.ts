@@ -62,22 +62,46 @@ const drawLotteryWinnersIntoDB = async (payload: {
     let winners: any[] = [];
 
     // random mode
+    // if (mode === WINNER_SELECTED_BY.RANDOM) {
+    //     winners = drawRandomWinners(approvedParticipants, winnerCount);
+    // }
     if (mode === WINNER_SELECTED_BY.RANDOM) {
-        winners = drawRandomWinners(approvedParticipants, winnerCount);
+        const shuffled = secureShuffle(approvedParticipants);
+
+        winners = shuffled.slice(0, winnerCount).map((w, index) => ({
+            ...w,
+            rank: index + 1,
+        }));
     }
 
     // manual mode
+    // if (mode === WINNER_SELECTED_BY.MANUAL) {
+    //     if (!selectedUserIds || selectedUserIds.length === 0) {
+    //         throw new ApiError(
+    //             400,
+    //             "Selected users required for manual mode"
+    //         );
+    //     }
+
+    //     winners = approvedParticipants.filter((p) =>
+    //         selectedUserIds.includes(p.userId.toString())
+    //     );
+
+    //     if (!winners.length) {
+    //         throw new ApiError(400, "No valid winners selected");
+    //     }
+    // }
     if (mode === WINNER_SELECTED_BY.MANUAL) {
         if (!selectedUserIds || selectedUserIds.length === 0) {
-            throw new ApiError(
-                400,
-                "Selected users required for manual mode"
-            );
+            throw new ApiError(400, "Selected users required for manual mode");
         }
 
-        winners = approvedParticipants.filter((p) =>
-            selectedUserIds.includes(p.userId.toString())
-        );
+        winners = approvedParticipants
+            .filter((p) => selectedUserIds.includes(p.userId.toString()))
+            .map((w, index) => ({
+                ...w,
+                rank: index + 1,
+            }));
 
         if (!winners.length) {
             throw new ApiError(400, "No valid winners selected");

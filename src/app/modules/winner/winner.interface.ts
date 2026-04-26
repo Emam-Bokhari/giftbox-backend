@@ -5,4 +5,6 @@ export type TLotteryWinner = {
     lotteryId: Schema.Types.ObjectId;
     userId: Schema.Types.ObjectId;
     selectedBy: WINNER_SELECTED_BY;
+    createdAt: Date;
+    rank?: number;
 }

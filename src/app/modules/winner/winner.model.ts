@@ -21,6 +21,16 @@ const lotteryWinnerSchema = new Schema<TLotteryWinner>(
       enum: Object.values(WINNER_SELECTED_BY),
       required: true,
     },
+
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+    rank: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
