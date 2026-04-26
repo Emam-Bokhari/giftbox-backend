@@ -25,6 +25,13 @@ router
   );
 
 router
+  .route("/:id/review")
+  .patch(
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    SupportControllers.reviewSupportByAdmin,
+  );
+
+router
   .route("/:id")
   .get(
     auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),

@@ -43,6 +43,18 @@ const getSupportById = catchAsync(async (req, res) => {
   });
 });
 
+const reviewSupportByAdmin = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const result = await SupportServices.reviewSupportByAdminToDB(id, status);
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Support data is reviewed successfully",
+    data: result,
+  });
+});
+
 const deleteSupportById = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await SupportServices.deleteSupportByIdFromDB(id);
@@ -58,5 +70,6 @@ export const SupportControllers = {
   submitSupportRequest,
   getAllSupports,
   getSupportById,
+  reviewSupportByAdmin,
   deleteSupportById,
 };
