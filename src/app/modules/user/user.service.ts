@@ -350,35 +350,82 @@ const updateProfileToDB = async (
 
 
 
+// const getAllUsersFromDB = async (query: any) => {
+//   // Base user query
+//   const baseQuery = User.find({
+//     role: USER_ROLES.USER,
+//     verified: true,
+//   });
+
+//   const queryBuilder = new QueryBuilder(baseQuery, query)
+//     .search(["name", "email", "phone", "city"])
+//     .sort()
+//     .fields()
+//     .filter()
+//     .paginate();
+
+//   // Fetch paginated users
+//   const users = await queryBuilder.modelQuery;
+//   const meta = await queryBuilder.countTotal();
+
+//   if (!users || users.length === 0) {
+//     return {
+//       data: [],
+//       meta: {},
+//     };
+//   }
+
+
+//   return {
+//     data: users,
+//     meta,
+//   };
+// };
+
 const getAllUsersFromDB = async (query: any) => {
-  // Base user query
+
   const baseQuery = User.find({
     role: USER_ROLES.USER,
     verified: true,
   });
 
   const queryBuilder = new QueryBuilder(baseQuery, query)
-    .search(["name", "email", "phone"])
+    .search(["name", "email", "phone", "city"])
     .sort()
     .fields()
     .filter()
     .paginate();
 
-  // Fetch paginated users
+  
   const users = await queryBuilder.modelQuery;
   const meta = await queryBuilder.countTotal();
 
-  if (!users || users.length === 0) {
-    return {
-      data: [],
-      meta: {},
-    };
-  }
 
+  const totalUsers = await User.countDocuments({
+    role: USER_ROLES.USER,
+    verified: true,
+  });
+
+  const activeUsers = await User.countDocuments({
+    role: USER_ROLES.USER,
+    verified: true,
+    status: "ACTIVE",
+  });
+
+  const inactiveUsers = await User.countDocuments({
+    role: USER_ROLES.USER,
+    verified: true,
+    status: "INACTIVE",
+  });
 
   return {
     data: users,
     meta,
+    stats: {
+      totalUsers,
+      activeUsers,
+      inactiveUsers,
+    },
   };
 };
 

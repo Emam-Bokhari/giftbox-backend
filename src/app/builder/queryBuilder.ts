@@ -10,81 +10,127 @@ class QueryBuilder<T> {
   }
 
   // SEARCH (generic + safe)
- search(searchableFields: string[]) {
-  const searchTerm = this.query.searchTerm as string;
+  search(searchableFields: string[]) {
+    const searchTerm = this.query.searchTerm as string;
 
-  if (!searchTerm) return this;
+    if (!searchTerm) return this;
 
-  const orConditions: FilterQuery<any>[] = [];
+    const orConditions: FilterQuery<any>[] = [];
 
-  searchableFields.forEach((field) => {
-    orConditions.push({
-      [field]: {
-        $regex: searchTerm,
-        $options: "i",
-      },
+    searchableFields.forEach((field) => {
+      orConditions.push({
+        [field]: {
+          $regex: searchTerm,
+          $options: "i",
+        },
+      });
     });
-  });
 
-  // ObjectId support
-  if (Types.ObjectId.isValid(searchTerm)) {
-    orConditions.push({
-      _id: new Types.ObjectId(searchTerm),
+    // ObjectId support
+    if (Types.ObjectId.isValid(searchTerm)) {
+      orConditions.push({
+        _id: new Types.ObjectId(searchTerm),
+      });
+    }
+
+    // 🔥 IMPORTANT: guard empty OR
+    if (orConditions.length === 0) return this;
+
+    this.modelQuery = this.modelQuery.find({
+      $or: orConditions,
     });
+
+    return this;
   }
-
-  // 🔥 IMPORTANT: guard empty OR
-  if (orConditions.length === 0) return this;
-
-  this.modelQuery = this.modelQuery.find({
-    $or: orConditions,
-  });
-
-  return this;
-}
 
   // FILTER (fully generic)
- filter() {
-  const queryObj = { ...this.query };
+  //  filter() {
+  //   const queryObj = { ...this.query };
 
-  const excludeFields = [
-    "searchTerm",
-    "sort",
-    "limit",
-    "page",
-    "fields",
-  ];
+  //   const excludeFields = [
+  //     "searchTerm",
+  //     "sort",
+  //     "limit",
+  //     "page",
+  //     "fields",
+  //   ];
 
-  excludeFields.forEach((el) => delete queryObj[el]);
+  //   excludeFields.forEach((el) => delete queryObj[el]);
 
-  // remove empty values
-  Object.keys(queryObj).forEach((key) => {
-    if (
-      queryObj[key] === undefined ||
-      queryObj[key] === null ||
-      queryObj[key] === ""
-    ) {
-      delete queryObj[key];
+  //   // remove empty values
+  //   Object.keys(queryObj).forEach((key) => {
+  //     if (
+  //       queryObj[key] === undefined ||
+  //       queryObj[key] === null ||
+  //       queryObj[key] === ""
+  //     ) {
+  //       delete queryObj[key];
+  //     }
+  //   });
+
+  //   // ✅ ONLY allow valid fields (important for security)
+  //   const allowedFilters = ["status", "mode","city"];
+
+  //   const finalFilter: any = {};
+
+  //   allowedFilters.forEach((key) => {
+  //     if (queryObj[key]) {
+  //       finalFilter[key] = queryObj[key];
+  //     }
+  //   });
+
+
+
+  //   if (Object.keys(finalFilter).length > 0) {
+  //     this.modelQuery = this.modelQuery.find(finalFilter);
+  //   }
+
+  //   return this;
+  // }
+  filter() {
+    const queryObj = { ...this.query };
+
+    const excludeFields = [
+      "searchTerm",
+      "sort",
+      "limit",
+      "page",
+      "fields",
+    ];
+
+    excludeFields.forEach((el) => delete queryObj[el]);
+
+    // remove empty values
+    Object.keys(queryObj).forEach((key) => {
+      if (
+        queryObj[key] === undefined ||
+        queryObj[key] === null ||
+        queryObj[key] === ""
+      ) {
+        delete queryObj[key];
+      }
+    });
+
+    // ONLY allow valid fields
+    const allowedFilters = ["status", "mode", "city"];
+
+    const finalFilter: any = {};
+
+    allowedFilters.forEach((key) => {
+      if (queryObj[key]) {
+        finalFilter[key] = {
+          $regex: queryObj[key],
+          $options: "i", // 🔥 case-insensitive
+        };
+      }
+    });
+
+    if (Object.keys(finalFilter).length > 0) {
+      this.modelQuery = this.modelQuery.find(finalFilter);
     }
-  });
 
-  // ✅ ONLY allow valid fields (important for security)
-  const allowedFilters = ["status", "mode"];
-
-  const finalFilter: any = {};
-
-  allowedFilters.forEach((key) => {
-    if (queryObj[key]) {
-      finalFilter[key] = queryObj[key];
-    }
-  });
-
-  if (Object.keys(finalFilter).length > 0) {
-    this.modelQuery = this.modelQuery.find(finalFilter);
+    return this;
   }
-
-  return this;
-}
 
   //  SORT
   sort() {

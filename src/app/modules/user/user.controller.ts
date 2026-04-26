@@ -111,6 +111,7 @@ const getAllUsers = catchAsync(async (req, res) => {
     message: "Successfully retrieved are users data",
     data: result?.data || [],
     meta: result?.meta || {},
+    stats: result?.stats || {},
   });
 });
 
