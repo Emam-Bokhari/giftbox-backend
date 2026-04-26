@@ -35,5 +35,12 @@ router.get(
   ParticipantControllers.getMyParticipationDetails
 );
 
+router.patch(
+  "/:id/status",
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  validateRequest(ParticipantValidationSchema.updateStatusZodSchema),
+  ParticipantControllers.updateParticipantStatus
+);
+
 
 export const LotteryParticipantRoutes = router;

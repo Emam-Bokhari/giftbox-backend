@@ -24,6 +24,16 @@ export const createLotteryParticipantZodSchema = z.object({
   }),
 });
 
+const updateStatusZodSchema = z.object({
+  body: z.object({
+    status: z.enum([
+      LOTTERY_PARTICIPANT_STATUS.APPROVED,
+      LOTTERY_PARTICIPANT_STATUS.REJECTED,
+    ]),
+  }),
+});
+
 export const ParticipantValidationSchema={
     createLotteryParticipantZodSchema,
+    updateStatusZodSchema,
 }
