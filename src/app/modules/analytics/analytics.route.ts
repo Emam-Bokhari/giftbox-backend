@@ -7,5 +7,8 @@ router.get("/finance-and-payments-stats", AnalyticsControllers.getFinanceAndPaym
 
 router.get("/admin-dashboard-stats", AnalyticsControllers.getAdminDashboardStats);
 
+router.get("/yearly-ticket-stats", AnalyticsControllers.getYearlyTicketStats);
+
+
 
 export const AnalyticsRoutes = router;
