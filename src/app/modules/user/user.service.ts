@@ -354,52 +354,6 @@ const updateProfileToDB = async (
 
 
 
-// const getAllUsersFromDB = async (query: any) => {
-
-//   const baseQuery = User.find({
-//     role: USER_ROLES.USER,
-//     verified: true,
-//   });
-
-//   const queryBuilder = new QueryBuilder(baseQuery, query)
-//     .search(["name", "email", "phone", "city"])
-//     .sort()
-//     .fields()
-//     .filter()
-//     .paginate();
-
-  
-//   const users = await queryBuilder.modelQuery;
-//   const meta = await queryBuilder.countTotal();
-
-
-//   const totalUsers = await User.countDocuments({
-//     role: USER_ROLES.USER,
-//     verified: true,
-//   });
-
-//   const activeUsers = await User.countDocuments({
-//     role: USER_ROLES.USER,
-//     verified: true,
-//     status: "ACTIVE",
-//   });
-
-//   const inactiveUsers = await User.countDocuments({
-//     role: USER_ROLES.USER,
-//     verified: true,
-//     status: "INACTIVE",
-//   });
-
-//   return {
-//     data: users,
-//     meta,
-//     stats: {
-//       totalUsers,
-//       activeUsers,
-//       inactiveUsers,
-//     },
-//   };
-// };
 
 const getAllUsersFromDB = async (query: any) => {
   const baseQuery = User.find({
@@ -503,16 +457,99 @@ const getAllUsersFromDB = async (query: any) => {
   };
 };
 
+// const getUserByIdFromDB = async (id: string) => {
+//   const result = await User.findOne({
+//     _id: id,
+//     role: USER_ROLES.USER,
+//   });
+
+//   if (!result)
+//     throw new ApiError(404, "No user is found in the database by this ID");
+
+//   return result;
+// };
+
 const getUserByIdFromDB = async (id: string) => {
-  const result = await User.findOne({
+  const user = await User.findOne({
     _id: id,
     role: USER_ROLES.USER,
   });
 
-  if (!result)
+  if (!user) {
     throw new ApiError(404, "No user is found in the database by this ID");
+  }
 
-  return result;
+  const userObjectId = new Types.ObjectId(id);
+
+  /* ================= PARTICIPATION HISTORY ================= */
+  const participations = await LotteryParticipant.find({
+    userId: userObjectId,
+  })
+    .populate("lotteryId", "title ticketNumber ticketPrice currency")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  /* ================= WIN HISTORY ================= */
+  const wins = await LotteryWinner.find({
+    userId: userObjectId,
+  })
+    .populate("lotteryId", "title ticketNumber ticketPrice currency")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  /* ================= TOTAL CALCULATIONS ================= */
+
+  const totalParticipated = participations.length;
+  const totalWins = wins.length;
+
+  // total invested (ticket purchase)
+  const totalInvested = participations.reduce((sum: number, p: any) => {
+    return sum + (p.amount || p.lotteryId?.ticketPrice || 0);
+  }, 0);
+
+  /* ================= FORMAT HISTORY ================= */
+
+  const participationHistory = participations.map((p: any) => ({
+    id: p._id,
+    lotteryId: p.lotteryId?._id,
+    title: p.lotteryId?.title,
+    // ticketNumber: p.lotteryId?.ticketNumber,
+    ticketPrice: p.lotteryId?.ticketPrice,
+    // currency: p.lotteryId?.currency,
+
+    // amount: p.amount,
+    status: p.status,
+    paymentProof: p.paymentProof,
+
+    createdAt: p.createdAt,
+  }));
+
+  const winHistory = wins.map((w: any) => ({
+    id: w._id,
+    lotteryId: w.lotteryId?._id,
+    title: w.lotteryId?.title,
+    ticketNumber: w.lotteryId?.ticketNumber,
+    ticketPrice: w.lotteryId?.ticketPrice,
+    currency: w.lotteryId?.currency,
+
+    // rank: w.rank,
+    // selectedBy: w.selectedBy,
+
+    createdAt: w.createdAt,
+  }));
+
+  return {
+    user: user.toObject(),
+
+    stats: {
+      totalParticipated,
+      totalWins,
+      totalInvested,
+    },
+
+    participationHistory,
+    winHistory,
+  };
 };
 
 const updateUserStatusByIdToDB = async (
