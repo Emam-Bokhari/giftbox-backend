@@ -20,7 +20,21 @@ const getAdminDashboardStats = catchAsync(async (req, res) => {
     })
 })
 
-export const AnalyticsControllers={
+const getYearlyTicketStats = catchAsync(async (req, res) => {
+    const { year } = req.query;
+    const yearNumber = Number(year);
+    const result = await AnalyticsServices.getYearlyTicketStatsFromDB(yearNumber);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        data: result,
+    })
+})
+
+
+
+export const AnalyticsControllers = {
     getFinanceAndPaymentsStats,
     getAdminDashboardStats,
+    getYearlyTicketStats,
 }
