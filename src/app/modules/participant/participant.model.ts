@@ -22,6 +22,12 @@ const lotteryParticipantSchema = new Schema<TLotteryParticipant>(
       trim: true,
     },
 
+    amount: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
     status: {
       type: String,
       enum: Object.values(LOTTERY_PARTICIPANT_STATUS),

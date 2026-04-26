@@ -8,5 +8,6 @@ export type TLotteryParticipant = {
     status: LOTTERY_PARTICIPANT_STATUS;
     createdAt: Date;
     updatedAt: Date;
-    
+    amount: number;
+
 }

@@ -45,7 +45,8 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
     const participant = await LotteryParticipant.create({
         lotteryId,
         userId,
-        paymentProof
+        paymentProof,
+        amount: lottery.ticketPrice,
     });
 
     return participant;
