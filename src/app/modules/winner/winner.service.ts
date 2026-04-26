@@ -7,6 +7,10 @@ import { LOTTERY_PARTICIPANT_STATUS } from "../participant/participant.constant"
 import { LotteryWinner } from "./winner.model";
 import { LOTTERY_STATUS } from "../lottery/lottery.constant";
 import QueryBuilder from "../../builder/queryBuilder";
+import { User } from "../user/user.model";
+import { USER_ROLES } from "../../../enums/user";
+import { notificationHelper } from "../../builder/pushNotification";
+import { NOTIFICATION_TYPE } from "../notification/notification.constant";
 
 /* ================= SECURE SHUFFLE ================= */
 const secureShuffle = (array: any[]) => {
@@ -35,6 +39,91 @@ const drawRandomWinners = (participants: any[], winnerCount: number) => {
 };
 
 /* ================= MAIN SERVICE ================= */
+// const drawLotteryWinnersIntoDB = async (payload: {
+//   lotteryId: string;
+//   mode: WINNER_SELECTED_BY;
+//   winnerCount: number;
+//   selectedUserIds?: string[];
+// }) => {
+//   const { lotteryId, mode, winnerCount, selectedUserIds } = payload;
+
+//   if (!lotteryId) {
+//     throw new ApiError(400, "Lottery ID is required");
+//   }
+
+//   const lottery = await Lottery.findById(lotteryId);
+
+//   if (!lottery) {
+//     throw new ApiError(404, "Lottery not found");
+//   }
+
+//   if (lottery.status === LOTTERY_STATUS.DRAWN) {
+//     throw new ApiError(400, "Lottery already drawn");
+//   }
+
+//   /* ================= GET APPROVED PARTICIPANTS ================= */
+//   const approvedParticipants = await LotteryParticipant.find({
+//     lotteryId,
+//     status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+//   });
+
+//   if (!approvedParticipants.length) {
+//     throw new ApiError(400, "No approved participants found");
+//   }
+
+//   let winners: { userId: any; rank: number }[] = [];
+
+//   /* ================= RANDOM MODE ================= */
+//   if (mode === WINNER_SELECTED_BY.RANDOM) {
+//     winners = drawRandomWinners(approvedParticipants, winnerCount);
+//   }
+
+//   /* ================= MANUAL MODE ================= */
+//   if (mode === WINNER_SELECTED_BY.MANUAL) {
+//     if (!selectedUserIds || selectedUserIds.length === 0) {
+//       throw new ApiError(400, "Selected users required for manual mode");
+//     }
+
+//     winners = approvedParticipants
+//       .filter((p) => selectedUserIds.includes(p.userId.toString()))
+//       .map((w, index) => ({
+//         userId: w.userId,
+//         rank: index + 1,
+//       }));
+
+//     if (!winners.length) {
+//       throw new ApiError(400, "No valid winners selected");
+//     }
+//   }
+
+//   /* ================= SAVE WINNERS ================= */
+//   await LotteryWinner.insertMany(
+//     winners.map((w) => ({
+//       lotteryId,
+//       userId: w.userId,
+//       selectedBy: mode,
+//       rank: w.rank,
+//     }))
+//   );
+
+//   /* ================= FETCH POPULATED WINNERS (FIX) ================= */
+//   const populatedWinners = await LotteryWinner.find({ lotteryId })
+//     .populate("userId", "name email phone city profileImage")
+//     .sort({ rank: 1 });
+
+//   /* ================= FINALIZE LOTTERY ================= */
+//   lottery.status = LOTTERY_STATUS.DRAWN;
+//   await lottery.save();
+
+//   return {
+//     lotteryId,
+//     mode,
+//     totalWinners: populatedWinners.length,
+//     winners: populatedWinners,
+//   };
+// };
+
+
 const drawLotteryWinnersIntoDB = async (payload: {
   lotteryId: string;
   mode: WINNER_SELECTED_BY;
@@ -66,6 +155,10 @@ const drawLotteryWinnersIntoDB = async (payload: {
   if (!approvedParticipants.length) {
     throw new ApiError(400, "No approved participants found");
   }
+
+  const participantUserIds = approvedParticipants.map((p) =>
+    p.userId.toString()
+  );
 
   let winners: { userId: any; rank: number }[] = [];
 
@@ -102,7 +195,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
     }))
   );
 
-  /* ================= FETCH POPULATED WINNERS (FIX) ================= */
+  /* ================= POPULATED WINNERS ================= */
   const populatedWinners = await LotteryWinner.find({ lotteryId })
     .populate("userId", "name email phone city profileImage")
     .sort({ rank: 1 });
@@ -111,9 +204,62 @@ const drawLotteryWinnersIntoDB = async (payload: {
   lottery.status = LOTTERY_STATUS.DRAWN;
   await lottery.save();
 
+  /* ================= NOTIFICATIONS ================= */
+
+  const notifications: Promise<any>[] = [];
+
+  /* ================= 1. ADMIN ================= */
+  const admin = await User.findOne({
+    role: USER_ROLES.SUPER_ADMIN,
+  }).select("_id");
+
+  if (admin) {
+    notifications.push(
+      notificationHelper.sendToUser(admin._id.toString(), {
+        title: "🏆 Lottery Draw Completed",
+        body: `Lottery "${lottery.title}" result published`,
+        type: NOTIFICATION_TYPE.ADMIN,
+        data: {
+          lotteryId: lottery._id.toString(),
+        },
+      })
+    );
+  }
+
+  /* ================= 2. WINNERS ================= */
+  for (const winner of populatedWinners) {
+    notifications.push(
+      notificationHelper.sendToUser(winner.userId.toString(), {
+        title: "🎉 You Won!",
+        body: `Congratulations! You’ve won in "${lottery.title}". 🎉`,
+        type: NOTIFICATION_TYPE.USER,
+        data: {
+          lotteryId: lottery._id.toString(),
+          rank: String(winner.rank),
+        },
+      })
+    );
+  }
+
+  /* ================= 3. ALL PARTICIPANTS (IMPORTANT) ================= */
+  notifications.push(
+    notificationHelper.sendToBatch(participantUserIds, {
+      title: "📢 Lottery Result Announced",
+      body: `Results for "${lottery.title}" have been published`,
+      type: NOTIFICATION_TYPE.USER,
+      data: {
+        lotteryId: lottery._id.toString(),
+      },
+    })
+  );
+
+  /* ================= EXECUTE ALL ================= */
+  await Promise.allSettled(notifications);
+
   return {
     lotteryId,
     mode,
+    totalParticipants: participantUserIds.length,
     totalWinners: populatedWinners.length,
     winners: populatedWinners,
   };
@@ -346,7 +492,7 @@ const getLotteryDrawHistoryByIdFromDB = async (
 };
 
 export const WinnerServices = {
-  drawLotteryWinnersIntoDB, 
+  drawLotteryWinnersIntoDB,
   getLotteryDrawHistoryFromDB,
   getLotteryDrawHistoryByIdFromDB,
 };

@@ -3,8 +3,8 @@
 3. dashboard abong app a notification ar kaj bakia ase
 
 
-2. lottery create -> user,admin
-3. lottery active -> user,admin
+
+
 4. lottery draw -> user,admin
 5. user participate -> admin
 6. support create -> admin
