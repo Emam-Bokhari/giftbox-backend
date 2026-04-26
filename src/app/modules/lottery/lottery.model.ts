@@ -32,9 +32,6 @@ const lotterySchema = new Schema<TLottery>(
             required: true,
             min: 0,
         },
-
-
-
         currency: {
             type: String,
             required: true,

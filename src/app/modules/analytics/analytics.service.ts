@@ -12,7 +12,7 @@ const getFinanceAndPaymentsStatsFromDB = async (query: any) => {
 
   const now = new Date();
 
-  /* ================= ONLY APPLY FILTER IF NOT "all" ================= */
+// only appply filter not all
   if (filterType === "thisWeek") {
     dateFilter = {
       createdAt: { $gte: new Date(now.setDate(now.getDate() - 7)) },
@@ -31,7 +31,7 @@ const getFinanceAndPaymentsStatsFromDB = async (query: any) => {
     };
   }
 
-  /* ================= ALL DATA BY DEFAULT ================= */
+  // all data default
   const allParticipations = await LotteryParticipant.find(dateFilter);
 
   if (!allParticipations.length) {
@@ -162,7 +162,7 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
     },
   ]);
 
-  /* ================= USERS (ALL USERS CREATED) ================= */
+  // all users default
   const userStats = await User.aggregate([
     {
       $match: {

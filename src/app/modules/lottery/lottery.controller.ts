@@ -1,6 +1,5 @@
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
-import { LotteryParticipantServices } from "../participant/participant.service";
 import { LotteryServices } from "./lottery.service";
 
 const createLottery = catchAsync(async (req, res) => {

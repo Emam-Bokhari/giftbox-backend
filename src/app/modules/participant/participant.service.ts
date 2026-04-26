@@ -97,10 +97,10 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
     amount: lottery.ticketPrice,
   });
 
-  /* ================= NOTIFICATIONS ================= */
+ // notifications
   const notifications: Promise<any>[] = [];
 
-  /* ================= 1. ADMIN ================= */
+  // 1. admin notification
     const admin = await User.findOne({
           role: USER_ROLES.SUPER_ADMIN,
       }).select("_id");
@@ -116,7 +116,7 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
           });
       }
 
-  /* ================= 2. USER (PARTICIPANT) ================= */
+  // 2. participant notification
   notifications.push(
     notificationHelper.sendToUser(userId.toString(), {
       title: "Successfully Joined Lottery",
@@ -332,10 +332,10 @@ const updateParticipantStatusIntoDB = async (
   participant.status = status;
   await participant.save();
 
-  /* ================= NOTIFICATIONS ================= */
+  // notifications
   const notifications: Promise<any>[] = [];
 
-  /* ================= 1. ADMIN (SOCKET ONLY) ================= */
+  // 1. admin notification
   const admin = await User.findOne({
     role: USER_ROLES.SUPER_ADMIN,
   }).select("_id");
@@ -351,7 +351,7 @@ const updateParticipantStatusIntoDB = async (
         });
     }
 
-  /* ================= 2. USER (PUSH + DB) ================= */
+  // 2. participant notification
   notifications.push(
     notificationHelper.sendToUser(participant.userId.toString(), {
       title:

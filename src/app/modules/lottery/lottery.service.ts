@@ -207,7 +207,7 @@ const createLotteryToDB = async (payload: TLottery) => {
         endAt: endTime,
     });
 
-    /* ================= ADMIN NOTIFICATION ================= */
+   // admin notification
     const admin = await User.findOne({
         role: USER_ROLES.SUPER_ADMIN,
     }).select("_id");
@@ -312,12 +312,12 @@ const updateLotteryIntoDB = async (
         throw new ApiError(404, "Lottery not found");
     }
 
-    // ❌ DRAWN = fully locked
+    // drawn lottery cannot be updated
     if (lottery.status === LOTTERY_STATUS.DRAWN) {
         throw new ApiError(400, "Cannot update a drawn lottery");
     }
 
-    // 🔵 ACTIVE = strict lock
+    // active lottery strict lock
     if (lottery.status === LOTTERY_STATUS.ACTIVE) {
         const restrictedFields = [
             "ticketPrice",
@@ -338,7 +338,7 @@ const updateLotteryIntoDB = async (
         });
     }
 
-    // 🟡 SCHEDULED = partial restriction (IMPORTANT FIX)
+    // scheduled lottery partial restriction
     if (lottery.status === LOTTERY_STATUS.SCHEDULED) {
         const restrictedFields = [
             "startAt",
@@ -356,7 +356,8 @@ const updateLotteryIntoDB = async (
         });
     }
 
-    // 🧪 date validation (safe for DRAFT or allowed cases)
+    // date validation
+    // safe for DRAFT or allowed cases
     if (payload.startAt && payload.endAt) {
         const start = new Date(payload.startAt);
         const end = new Date(payload.endAt);
@@ -369,7 +370,6 @@ const updateLotteryIntoDB = async (
         }
     }
 
-    // 🚀 final update
     const updatedLottery = await Lottery.findByIdAndUpdate(
         id,
         { $set: payload },
@@ -424,7 +424,7 @@ const updateLotteryStatusIntoDB = async (
         );
     }
 
-    //  Update status
+
     lottery.status = status;
     await lottery.save();
 
@@ -442,7 +442,7 @@ const deleteLotteryFromDB = async (id: string) => {
         throw new ApiError(404, "Lottery not found");
     }
 
-    //  Safety rule (recommended)
+ 
     if (
         lottery.status === LOTTERY_STATUS.ACTIVE ||
         lottery.status === LOTTERY_STATUS.SCHEDULED

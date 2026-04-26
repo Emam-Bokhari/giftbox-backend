@@ -13,7 +13,7 @@ import { notificationHelper } from "../../builder/pushNotification";
 import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
 
-/* ================= SECURE SHUFFLE ================= */
+// secure shuffle
 const secureShuffle = (array: any[]) => {
   const arr = [...array];
 
@@ -25,7 +25,7 @@ const secureShuffle = (array: any[]) => {
   return arr;
 };
 
-/* ================= RANDOM DRAW ================= */
+// random draw
 const drawRandomWinners = (participants: any[], winnerCount: number) => {
   if (winnerCount > participants.length) {
     throw new ApiError(400, "Winner count exceeds participants");
@@ -39,7 +39,7 @@ const drawRandomWinners = (participants: any[], winnerCount: number) => {
   }));
 };
 
-/* ================= MAIN SERVICE ================= */
+// main service
 // const drawLotteryWinnersIntoDB = async (payload: {
 //   lotteryId: string;
 //   mode: WINNER_SELECTED_BY;
@@ -147,7 +147,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
     throw new ApiError(400, "Lottery already drawn");
   }
 
-  /* ================= GET APPROVED PARTICIPANTS ================= */
+  // get approved participants
   const approvedParticipants = await LotteryParticipant.find({
     lotteryId,
     status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
@@ -163,12 +163,12 @@ const drawLotteryWinnersIntoDB = async (payload: {
 
   let winners: { userId: any; rank: number }[] = [];
 
-  /* ================= RANDOM MODE ================= */
+  // random mode
   if (mode === WINNER_SELECTED_BY.RANDOM) {
     winners = drawRandomWinners(approvedParticipants, winnerCount);
   }
 
-  /* ================= MANUAL MODE ================= */
+  // manual mode
   if (mode === WINNER_SELECTED_BY.MANUAL) {
     if (!selectedUserIds || selectedUserIds.length === 0) {
       throw new ApiError(400, "Selected users required for manual mode");
@@ -186,7 +186,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
     }
   }
 
-  /* ================= SAVE WINNERS ================= */
+  // save winners
   await LotteryWinner.insertMany(
     winners.map((w) => ({
       lotteryId,
@@ -196,20 +196,19 @@ const drawLotteryWinnersIntoDB = async (payload: {
     }))
   );
 
-  /* ================= POPULATED WINNERS ================= */
+  // fetch populated winners (fix)
   const populatedWinners = await LotteryWinner.find({ lotteryId })
     .populate("userId", "name email phone city profileImage")
     .sort({ rank: 1 });
 
-  /* ================= FINALIZE LOTTERY ================= */
+  // finalize lottery
   lottery.status = LOTTERY_STATUS.DRAWN;
   await lottery.save();
 
-  /* ================= NOTIFICATIONS ================= */
-
+  // notifications
   const notifications: Promise<any>[] = [];
 
-  /* ================= 1. ADMIN ================= */
+  // 1. admin notification
   const admin = await User.findOne({
     role: USER_ROLES.SUPER_ADMIN,
   }).select("_id");
@@ -225,7 +224,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
     });
   }
 
-  /* ================= 2. WINNERS ================= */
+  // 2. winners notification
   for (const winner of populatedWinners) {
     if (!winner.userId) continue;
 
@@ -244,7 +243,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
     );
   }
 
-  /* ================= 3. ALL PARTICIPANTS (IMPORTANT) ================= */
+  // 3. all participants notification
   notifications.push(
     notificationHelper.sendToBatch(participantUserIds, {
       title: "📢 Lottery Result Announced",
@@ -258,7 +257,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
     })
   );
 
-  /* ================= EXECUTE ALL ================= */
+  // execute all notifications
   await Promise.allSettled(notifications);
 
   return {
@@ -271,12 +270,12 @@ const drawLotteryWinnersIntoDB = async (payload: {
 };
 
 const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
-  //  Base lottery query (ONLY drawn lotteries)
+  // base lottery query (ONLY drawn lotteries)
   const baseQuery = Lottery.find({
     status: LOTTERY_STATUS.DRAWN,
   }).sort({ updatedAt: -1 });
 
-  //  Pagination only on lottery list
+  // pagination (pagination only on lottery list)
   const lotteryQuery = new QueryBuilder(baseQuery, query)
     .search(["title", "ticketNumber"])
     .filter()
@@ -286,7 +285,7 @@ const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
   const lotteries = await lotteryQuery.modelQuery;
   const meta = await lotteryQuery.countTotal();
 
-  // Enrich each lottery with dashboard data
+  // enrich each lottery with dashboard data
   const data = await Promise.all(
     lotteries.map(async (lottery) => {
       const lotteryId = lottery._id;
@@ -393,14 +392,14 @@ const getLotteryDrawHistoryByIdFromDB = async (
     throw new ApiError(400, "Lottery ID is required");
   }
 
-  /* ================= LOTTERY INFO ================= */
+  // lottery info
   const lottery = await Lottery.findById(lotteryId);
 
   if (!lottery) {
     throw new ApiError(404, "Lottery not found");
   }
 
-  /* ================= PARTICIPANTS (TAB 1) ================= */
+  // 1. participants query
   const participantBaseQuery = LotteryParticipant.find({
     lotteryId,
   }).populate("userId", "name email phone city profileImage");
@@ -417,7 +416,7 @@ const getLotteryDrawHistoryByIdFromDB = async (
   const participants = await participantQuery.modelQuery;
   const participantMeta = await participantQuery.countTotal();
 
-  /* ================= WINNERS (TAB 2) ================= */
+  // 2. winners query
   const winnerBaseQuery = LotteryWinner.find({
     lotteryId,
   }).populate("userId", "name email phone city profileImage");
@@ -430,7 +429,7 @@ const getLotteryDrawHistoryByIdFromDB = async (
   const winners = await winnerQuery.modelQuery;
   const winnerMeta = await winnerQuery.countTotal();
 
-  /* ================= PAYMENT PROOFS (TAB 3) ================= */
+  // 3. payment proofs query
   const proofBaseQuery = LotteryParticipant.find({
     lotteryId,
     paymentProof: { $exists: true },
@@ -446,7 +445,7 @@ const getLotteryDrawHistoryByIdFromDB = async (
   const paymentProofs = await proofQuery.modelQuery;
   const proofMeta = await proofQuery.countTotal();
 
-  /* ================= STATS ================= */
+  // stats
   const allParticipants = await LotteryParticipant.find({
     lotteryId,
   });
@@ -460,7 +459,7 @@ const getLotteryDrawHistoryByIdFromDB = async (
   const revenue =
     approvedParticipants.length * (lottery.ticketPrice || 0);
 
-  /* ================= FINAL RESPONSE ================= */
+  // final response
   return {
     lottery: {
       _id: lottery._id,
