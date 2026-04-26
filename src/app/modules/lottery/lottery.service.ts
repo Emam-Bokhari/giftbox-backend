@@ -2,6 +2,7 @@ import ApiError from "../../../errors/ApiErrors";
 import { generateTicketId } from "../../../helpers/generateCustomId";
 import QueryBuilder from "../../builder/queryBuilder";
 import { LotteryParticipant } from "../participant/participant.model";
+import { LotteryWinner } from "../winner/winner.model";
 import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant";
 import { TLottery } from "./lottery.interface";
 import { Lottery } from "./lottery.model";
@@ -453,6 +454,44 @@ const getLotteryDashboardByIdFromDB = async (
     };
 };
 
+const getLotteryWinnersByLotteryIdFromDB = async (lotteryId: string) => {
+  if (!lotteryId) {
+    throw new ApiError(400, "Lottery ID is required");
+  }
+
+  // lottery check
+  const lottery = await Lottery.findById(lotteryId).select("ticketNumber");
+
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
+
+  // winners
+  const winners = await LotteryWinner.find({ lotteryId })
+    .populate("userId", "name email phone city profileImage")
+    .sort({ rank: 1 });
+
+  return {
+    ticketNumber: lottery.ticketNumber,
+
+    totalWinners: winners.length,
+
+    winners: winners.map((w: any) => ({
+      id: w._id,
+      userId: w.userId?._id,
+
+      name: w.userId?.name,
+      email: w.userId?.email,
+      phone: w.userId?.phone,
+      city: w.userId?.city,
+      profileImage: w.userId?.profileImage,
+
+      createdAt: w.createdAt,
+    })),
+  };
+};
+
+
 export const LotteryServices = {
     createLotteryToDB,
     getActiveLotteryFromDB,
@@ -463,4 +502,5 @@ export const LotteryServices = {
     updateLotteryIntoDB,
     deleteLotteryFromDB,
     getLotteryDashboardByIdFromDB,
+    getLotteryWinnersByLotteryIdFromDB,
 }
