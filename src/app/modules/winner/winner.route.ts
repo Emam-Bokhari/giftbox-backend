@@ -14,4 +14,18 @@ router.post(
     WinnerControllers.drawLotteryWinners
 );
 
+router.get(
+    "/draw-history",
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    WinnerControllers.getLotteryDrawHistory
+);
+
+router.get(
+    "/draw-history/:id",
+    auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+    WinnerControllers.getLotteryDrawHistoryById
+);
+
+
+
 export const WinnerRoutes = router;
