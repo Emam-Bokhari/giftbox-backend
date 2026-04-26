@@ -1,7 +1,9 @@
+import { USER_ROLES } from "../../../enums/user";
 import ApiError from "../../../errors/ApiErrors";
 import { generateTicketId } from "../../../helpers/generateCustomId";
 import QueryBuilder from "../../builder/queryBuilder";
 import { LotteryParticipant } from "../participant/participant.model";
+import { User } from "../user/user.model";
 import { LotteryWinner } from "../winner/winner.model";
 import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant";
 import { TLottery } from "./lottery.interface";
@@ -112,15 +114,31 @@ const createLotteryToDB = async (payload: TLottery) => {
     return lottery;
 };
 
-const getActiveLotteryFromDB = async () => {
+const getActiveLotteryFromDB = async (userId: string) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
     const activeLottery = await Lottery.findOne({
         status: LOTTERY_STATUS.ACTIVE,
-    });
+    }).lean();
 
     if (!activeLottery) {
         throw new ApiError(404, "No active lottery found");
     }
 
+    // role based response
+    // ADMIN → limited fields
+    if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.SUPER_ADMIN) {
+        return {
+            title: activeLottery.title,
+            startAt: activeLottery.startAt,
+            endAt: activeLottery.endAt,
+            createdAt: activeLottery.createdAt,
+        };
+    }
+
+    // USER → full data
     return activeLottery;
 };
 
@@ -455,40 +473,40 @@ const getLotteryDashboardByIdFromDB = async (
 };
 
 const getLotteryWinnersByLotteryIdFromDB = async (lotteryId: string) => {
-  if (!lotteryId) {
-    throw new ApiError(400, "Lottery ID is required");
-  }
+    if (!lotteryId) {
+        throw new ApiError(400, "Lottery ID is required");
+    }
 
-  // lottery check
-  const lottery = await Lottery.findById(lotteryId).select("ticketNumber");
+    // lottery check
+    const lottery = await Lottery.findById(lotteryId).select("ticketNumber");
 
-  if (!lottery) {
-    throw new ApiError(404, "Lottery not found");
-  }
+    if (!lottery) {
+        throw new ApiError(404, "Lottery not found");
+    }
 
-  // winners
-  const winners = await LotteryWinner.find({ lotteryId })
-    .populate("userId", "name email phone city profileImage")
-    .sort({ rank: 1 });
+    // winners
+    const winners = await LotteryWinner.find({ lotteryId })
+        .populate("userId", "name email phone city profileImage")
+        .sort({ rank: 1 });
 
-  return {
-    ticketNumber: lottery.ticketNumber,
+    return {
+        ticketNumber: lottery.ticketNumber,
 
-    totalWinners: winners.length,
+        totalWinners: winners.length,
 
-    winners: winners.map((w: any) => ({
-      id: w._id,
-      userId: w.userId?._id,
+        winners: winners.map((w: any) => ({
+            id: w._id,
+            userId: w.userId?._id,
 
-      name: w.userId?.name,
-      email: w.userId?.email,
-      phone: w.userId?.phone,
-      city: w.userId?.city,
-      profileImage: w.userId?.profileImage,
+            name: w.userId?.name,
+            email: w.userId?.email,
+            phone: w.userId?.phone,
+            city: w.userId?.city,
+            profileImage: w.userId?.profileImage,
 
-      createdAt: w.createdAt,
-    })),
-  };
+            createdAt: w.createdAt,
+        })),
+    };
 };
 
 
