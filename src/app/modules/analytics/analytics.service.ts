@@ -66,9 +66,9 @@ const getFinanceAndPaymentsStatsFromDB = async (query: any) => {
 
   return {
     filter: filterType,
-    totalRevenue,
+    totalRevenue: Number(totalRevenue.toFixed(2)),
     totalParticipations,
-    averageTicketPrice,
+    averageTicketPrice: Number(averageTicketPrice.toFixed(2)),
   };
 };
 
@@ -79,7 +79,7 @@ const getAdminDashboardStatsFromDB = async () => {
     pendingPayments,
     ticketStats,
   ] = await Promise.all([
-  //  total users
+    //  total users
     User.countDocuments({
       role: USER_ROLES.USER,
       verified: true,
@@ -135,7 +135,7 @@ const getAdminDashboardStatsFromDB = async () => {
       totalDrawCompleted,
       pendingPayments,
       totalTicketsSold,
-      totalRevenue,
+      totalRevenue: Number(totalRevenue.toFixed(2)),
     },
   };
 };
@@ -192,8 +192,8 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
 
 
   const monthNames = [
-    "Jan","Feb","Mar","Apr","May","Jun",
-    "Jul","Aug","Sep","Oct","Nov","Dec",
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
   ];
 
   const data = monthNames.map((name, index) => {
@@ -270,8 +270,8 @@ const getYearlyRevenueStatsFromDB = async (year?: number) => {
 
 
   const monthNames = [
-    "Jan","Feb","Mar","Apr","May","Jun",
-    "Jul","Aug","Sep","Oct","Nov","Dec",
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
   ];
 
   const data = monthNames.map((name, index) => {
@@ -279,7 +279,7 @@ const getYearlyRevenueStatsFromDB = async (year?: number) => {
 
     return {
       month: name,
-      totalRevenue: revenueMap[monthIndex] || 0,
+      totalRevenue: parseFloat((revenueMap[monthIndex] || 0).toFixed(2)),
     };
   });
 
@@ -291,8 +291,8 @@ const getYearlyRevenueStatsFromDB = async (year?: number) => {
 
 
 export const AnalyticsServices = {
-    getFinanceAndPaymentsStatsFromDB,
-    getAdminDashboardStatsFromDB,
-    getYearlyTicketStatsFromDB,
-    getYearlyRevenueStatsFromDB,
+  getFinanceAndPaymentsStatsFromDB,
+  getAdminDashboardStatsFromDB,
+  getYearlyTicketStatsFromDB,
+  getYearlyRevenueStatsFromDB,
 }
