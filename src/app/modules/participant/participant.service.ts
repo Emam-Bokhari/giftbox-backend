@@ -5,6 +5,7 @@ import { LotteryParticipant } from "./participant.model";
 import { LOTTERY_STATUS } from "../lottery/lottery.constant";
 import { TLotteryParticipant } from "./participant.interface";
 import QueryBuilder from "../../builder/queryBuilder";
+import { LOTTERY_PARTICIPANT_STATUS } from "./participant.constant";
 
 const createParticipantToDB = async (payload: TLotteryParticipant) => {
     const { lotteryId, userId, paymentProof } = payload;
@@ -154,8 +155,60 @@ const getMyParticipationDetailsFromDB = async (
   };
 };
 
+const updateParticipantStatusIntoDB = async (
+  id: string,
+  status: LOTTERY_PARTICIPANT_STATUS
+) => {
+  if (!id) {
+    throw new ApiError(400, "Participant ID is required");
+  }
+
+  if (!status) {
+    throw new ApiError(400, "Status is required");
+  }
+
+  const participant = await LotteryParticipant.findById(id);
+
+  if (!participant) {
+    throw new ApiError(404, "Participant not found");
+  }
+
+  // prevent double finalization
+  if (
+    participant.status === LOTTERY_PARTICIPANT_STATUS.APPROVED ||
+    participant.status === LOTTERY_PARTICIPANT_STATUS.REJECTED
+  ) {
+    throw new ApiError(
+      400,
+      "This participant is already finalized"
+    );
+  }
+
+  // validate transition
+  const allowedTransitions = [
+    `${LOTTERY_PARTICIPANT_STATUS.PENDING}->${LOTTERY_PARTICIPANT_STATUS.APPROVED}`,
+    `${LOTTERY_PARTICIPANT_STATUS.PENDING}->${LOTTERY_PARTICIPANT_STATUS.REJECTED}`,
+  ];
+
+  const transition = `${participant.status}->${status}`;
+
+  if (!allowedTransitions.includes(transition)) {
+    throw new ApiError(
+      400,
+      `Invalid status transition: ${participant.status} → ${status}`
+    );
+  }
+
+  participant.status = status;
+
+  await participant.save();
+
+  return participant;
+};
+
 export const LotteryParticipantServices = {
     createParticipantToDB,
     getMyParticipatedLotteriesFromDB,
     getMyParticipationDetailsFromDB,
+    updateParticipantStatusIntoDB,
 };
