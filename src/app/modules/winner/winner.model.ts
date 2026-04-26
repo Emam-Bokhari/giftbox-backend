@@ -13,7 +13,7 @@ const lotteryWinnerSchema = new Schema<TLotteryWinner>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
 
     selectedBy: {

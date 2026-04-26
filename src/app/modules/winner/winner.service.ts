@@ -6,131 +6,231 @@ import { LotteryParticipant } from "../participant/participant.model";
 import { LOTTERY_PARTICIPANT_STATUS } from "../participant/participant.constant";
 import { LotteryWinner } from "./winner.model";
 import { LOTTERY_STATUS } from "../lottery/lottery.constant";
+import QueryBuilder from "../../builder/queryBuilder";
 
-// secure shuffle
-
+/* ================= SECURE SHUFFLE ================= */
 const secureShuffle = (array: any[]) => {
-    const arr = [...array];
+  const arr = [...array];
 
-    for (let i = arr.length - 1; i > 0; i--) {
-        const rand = randomInt(0, i + 1);
-        [arr[i], arr[rand]] = [arr[rand], arr[i]];
-    }
+  for (let i = arr.length - 1; i > 0; i--) {
+    const rand = randomInt(0, i + 1);
+    [arr[i], arr[rand]] = [arr[rand], arr[i]];
+  }
 
-    return arr;
+  return arr;
 };
 
-// random pick
+/* ================= RANDOM DRAW ================= */
 const drawRandomWinners = (participants: any[], winnerCount: number) => {
-    if (winnerCount > participants.length) {
-        throw new ApiError(400, "Winner count exceeds participants");
-    }
+  if (winnerCount > participants.length) {
+    throw new ApiError(400, "Winner count exceeds participants");
+  }
 
-    const shuffled = secureShuffle(participants);
-    return shuffled.slice(0, winnerCount);
+  const shuffled = secureShuffle(participants);
+
+  return shuffled.slice(0, winnerCount).map((w, index) => ({
+    userId: w.userId,
+    rank: index + 1,
+  }));
 };
 
-// main service
+/* ================= MAIN SERVICE ================= */
 const drawLotteryWinnersIntoDB = async (payload: {
-    lotteryId: string;
-    mode: WINNER_SELECTED_BY;
-    winnerCount: number;
-    selectedUserIds?: string[];
+  lotteryId: string;
+  mode: WINNER_SELECTED_BY;
+  winnerCount: number;
+  selectedUserIds?: string[];
 }) => {
-    const { lotteryId, mode, winnerCount, selectedUserIds } = payload;
+  const { lotteryId, mode, winnerCount, selectedUserIds } = payload;
 
-    if (!lotteryId) {
-        throw new ApiError(400, "Lottery ID is required");
+  if (!lotteryId) {
+    throw new ApiError(400, "Lottery ID is required");
+  }
+
+  const lottery = await Lottery.findById(lotteryId);
+
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
+
+  if (lottery.status === LOTTERY_STATUS.DRAWN) {
+    throw new ApiError(400, "Lottery already drawn");
+  }
+
+  /* ================= GET APPROVED PARTICIPANTS ================= */
+  const approvedParticipants = await LotteryParticipant.find({
+    lotteryId,
+    status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+  });
+
+  if (!approvedParticipants.length) {
+    throw new ApiError(400, "No approved participants found");
+  }
+
+  let winners: { userId: any; rank: number }[] = [];
+
+  /* ================= RANDOM MODE ================= */
+  if (mode === WINNER_SELECTED_BY.RANDOM) {
+    winners = drawRandomWinners(approvedParticipants, winnerCount);
+  }
+
+  /* ================= MANUAL MODE ================= */
+  if (mode === WINNER_SELECTED_BY.MANUAL) {
+    if (!selectedUserIds || selectedUserIds.length === 0) {
+      throw new ApiError(400, "Selected users required for manual mode");
     }
 
-    const lottery = await Lottery.findById(lotteryId);
+    winners = approvedParticipants
+      .filter((p) => selectedUserIds.includes(p.userId.toString()))
+      .map((w, index) => ({
+        userId: w.userId,
+        rank: index + 1,
+      }));
 
-    if (!lottery) {
-        throw new ApiError(404, "Lottery not found");
+    if (!winners.length) {
+      throw new ApiError(400, "No valid winners selected");
     }
+  }
 
-    // get approved participants
-    const approvedParticipants = await LotteryParticipant.find({
-        lotteryId,
-        status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
-    });
+  /* ================= SAVE WINNERS ================= */
+  await LotteryWinner.insertMany(
+    winners.map((w) => ({
+      lotteryId,
+      userId: w.userId,
+      selectedBy: mode,
+      rank: w.rank,
+    }))
+  );
 
-    if (!approvedParticipants.length) {
-        throw new ApiError(400, "No approved participants found");
-    }
+  /* ================= FETCH POPULATED WINNERS (FIX) ================= */
+  const populatedWinners = await LotteryWinner.find({ lotteryId })
+    .populate("userId", "name email phone city profileImage")
+    .sort({ rank: 1 });
 
-    let winners: any[] = [];
+  /* ================= FINALIZE LOTTERY ================= */
+  lottery.status = LOTTERY_STATUS.DRAWN;
+  await lottery.save();
 
-    // random mode
-    // if (mode === WINNER_SELECTED_BY.RANDOM) {
-    //     winners = drawRandomWinners(approvedParticipants, winnerCount);
-    // }
-    if (mode === WINNER_SELECTED_BY.RANDOM) {
-        const shuffled = secureShuffle(approvedParticipants);
+  return {
+    lotteryId,
+    mode,
+    totalWinners: populatedWinners.length,
+    winners: populatedWinners,
+  };
+};
 
-        winners = shuffled.slice(0, winnerCount).map((w, index) => ({
-            ...w,
-            rank: index + 1,
-        }));
-    }
+const getLotteryDashboardByIdFromDB = async (
+  lotteryId: string,
+  query: Record<string, unknown>
+) => {
+  if (!lotteryId) {
+    throw new ApiError(400, "Lottery ID is required");
+  }
 
-    // manual mode
-    // if (mode === WINNER_SELECTED_BY.MANUAL) {
-    //     if (!selectedUserIds || selectedUserIds.length === 0) {
-    //         throw new ApiError(
-    //             400,
-    //             "Selected users required for manual mode"
-    //         );
-    //     }
+  /* ================= LOTTERY INFO ================= */
+  const lottery = await Lottery.findById(lotteryId);
 
-    //     winners = approvedParticipants.filter((p) =>
-    //         selectedUserIds.includes(p.userId.toString())
-    //     );
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
 
-    //     if (!winners.length) {
-    //         throw new ApiError(400, "No valid winners selected");
-    //     }
-    // }
-    if (mode === WINNER_SELECTED_BY.MANUAL) {
-        if (!selectedUserIds || selectedUserIds.length === 0) {
-            throw new ApiError(400, "Selected users required for manual mode");
-        }
+  /* ================= PARTICIPANTS (TAB 1) ================= */
+  const participantBaseQuery = LotteryParticipant.find({
+    lotteryId,
+  }).populate("userId", "name email phone city profileImage");
 
-        winners = approvedParticipants
-            .filter((p) => selectedUserIds.includes(p.userId.toString()))
-            .map((w, index) => ({
-                ...w,
-                rank: index + 1,
-            }));
+  const participantQuery = new QueryBuilder(
+    participantBaseQuery,
+    query
+  )
+    .search(["status"])
+    .filter()
+    .sort()
+    .paginate();
 
-        if (!winners.length) {
-            throw new ApiError(400, "No valid winners selected");
-        }
-    }
+  const participants = await participantQuery.modelQuery;
+  const participantMeta = await participantQuery.countTotal();
 
-    // save winners
-    const winnerDocs = await Promise.all(
-        winners.map((w) =>
-            LotteryWinner.create({
-                lotteryId,
-                userId: w.userId,
-                selectedBy: mode,
-            })
-        )
-    );
+  /* ================= WINNERS (TAB 2) ================= */
+  const winnerBaseQuery = LotteryWinner.find({
+    lotteryId,
+  }).populate("userId", "name email phone city profileImage");
 
-    // finalize lottery
-    lottery.status = LOTTERY_STATUS.DRAWN;
-    await lottery.save();
+  const winnerQuery = new QueryBuilder(winnerBaseQuery, query)
+    .filter()
+    .sort()
+    .paginate();
 
-    return {
-        lotteryId,
-        mode,
-        totalWinners: winnerDocs.length,
-        winners: winnerDocs,
-    };
+  const winners = await winnerQuery.modelQuery;
+  const winnerMeta = await winnerQuery.countTotal();
+
+  /* ================= PAYMENT PROOFS (TAB 3) ================= */
+  const proofBaseQuery = LotteryParticipant.find({
+    lotteryId,
+    paymentProof: { $exists: true },
+  })
+    .populate("userId", "name email phone city")
+    .select("paymentProof status userId");
+
+  const proofQuery = new QueryBuilder(proofBaseQuery, query)
+    .filter()
+    .sort()
+    .paginate();
+
+  const paymentProofs = await proofQuery.modelQuery;
+  const proofMeta = await proofQuery.countTotal();
+
+  /* ================= STATS ================= */
+  const allParticipants = await LotteryParticipant.find({
+    lotteryId,
+  });
+
+  const approvedParticipants = allParticipants.filter(
+    (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED
+  );
+
+  const totalParticipants = allParticipants.length;
+
+  const revenue =
+    approvedParticipants.length * (lottery.ticketPrice || 0);
+
+  /* ================= FINAL RESPONSE ================= */
+  return {
+    lottery: {
+      _id: lottery._id,
+      title: lottery.title,
+      banner: lottery.banner,
+      ticketPrice: lottery.ticketPrice,
+      currency: lottery.currency,
+      status: lottery.status,
+      startAt: lottery.startAt,
+      endAt: lottery.endAt,
+    },
+
+    participants: {
+      data: participants,
+      meta: participantMeta,
+    },
+
+    winners: {
+      data: winners,
+      meta: winnerMeta,
+    },
+
+    paymentProofs: {
+      data: paymentProofs,
+      meta: proofMeta,
+    },
+
+    stats: {
+      totalParticipants,
+      approvedParticipants: approvedParticipants.length,
+      revenue,
+    },
+  };
 };
 
 export const WinnerServices = {
-    drawLotteryWinnersIntoDB,
-}
+  drawLotteryWinnersIntoDB,
+  getLotteryDashboardByIdFromDB,
+};
