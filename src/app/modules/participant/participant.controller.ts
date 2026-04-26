@@ -57,8 +57,29 @@ const getMyParticipationDetails = catchAsync(
   }
 );
 
+const updateParticipantStatus = catchAsync(
+  async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const result =
+      await LotteryParticipantServices.updateParticipantStatusIntoDB(
+        id,
+        status
+      );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "Participant status updated successfully",
+      data: result,
+    });
+  }
+);
+
 export const ParticipantControllers = {
     createParticipant,
     getMyParticipatedLotteries,
     getMyParticipationDetails,
+    updateParticipantStatus,
 }
