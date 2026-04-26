@@ -155,9 +155,7 @@ const createUserZodSchema = z.object({
         .enum([...Object.values(STATUS)] as [string, ...string[]])
         .optional(),
 
-      city: z.string({
-        required_error: "City is required",
-      }),
+      city: z.string().optional(),
 
       gender: z
         .enum([...Object.values(GENDER)] as [string, ...string[]])

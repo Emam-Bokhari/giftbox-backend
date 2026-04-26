@@ -23,9 +23,13 @@ const createAdminToDB = async (payload: any): Promise<IUser> => {
   delete payload.phone;
 
   const isExistAdmin = await User.findOne({ email: payload.email });
+
   if (isExistAdmin) {
     throw new ApiError(StatusCodes.CONFLICT, "This Email already taken");
   }
+
+  // ⚠️ IMPORTANT: password must come from payload (or generate if needed)
+  const rawPassword = payload.password;
 
   const adminPayload = {
     ...payload,
@@ -35,6 +39,85 @@ const createAdminToDB = async (payload: any): Promise<IUser> => {
   };
 
   const createAdmin = await User.create(adminPayload);
+
+  // ---------------- EMAIL TEMPLATE ----------------
+  const emailHtml = `
+  <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+      <tr>
+        <td align="center">
+
+          <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,0.08);">
+
+            <!-- Header -->
+            <tr>
+              <td style="background:#22143b;padding:25px;text-align:center;color:#ffffff;">
+                <h2 style="margin:0;">Admin Account Created</h2>
+                <p style="margin:5px 0 0 0;font-size:13px;">Welcome to GiftBox Admin Panel</p>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:30px;color:#333;font-size:15px;line-height:1.6;">
+
+                <p>Hello <b>${payload.name || "Admin"}</b>,</p>
+
+                <p>Your admin account has been created successfully.</p>
+
+                <table style="width:100%;margin-top:20px;">
+                  <tr>
+                    <td style="padding:8px 0;font-weight:bold;width:120px;">Email:</td>
+                    <td>${payload.email}</td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:8px 0;font-weight:bold;">Password:</td>
+                    <td style="background:#f0f0f0;padding:8px;border-radius:5px;">
+                      ${rawPassword}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:8px 0;font-weight:bold;">Role:</td>
+                    <td>ADMIN</td>
+                  </tr>
+                </table>
+
+                <div style="margin-top:25px;text-align:center;">
+                  <a href="${config.dashboard_url}/dashboard" 
+                    style="background:#22143b;color:#ffffff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:bold;">
+                    Login to Dashboard
+                  </a>
+                </div>
+
+                <p style="margin-top:25px;font-size:13px;color:#777;">
+                  ⚠️ Please change your password after first login for security.
+                </p>
+
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f2f2f2;text-align:center;padding:15px;font-size:12px;color:#888;">
+                © ${new Date().getFullYear()} GiftBox. All rights reserved.
+              </td>
+            </tr>
+
+          </table>
+
+        </td>
+      </tr>
+    </table>
+  </body>
+  `;
+
+  await emailHelper.sendEmail({
+    to: payload.email,
+    subject: "Your Admin Account Credentials - GiftBox",
+    html: emailHtml,
+  });
 
   return createAdmin;
 };
@@ -109,6 +192,13 @@ const createUserToDB = async (payload: any) => {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       "Email or phone is required"
+    );
+  }
+
+  if(!payload.city){
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "City is required"
     );
   }
 
