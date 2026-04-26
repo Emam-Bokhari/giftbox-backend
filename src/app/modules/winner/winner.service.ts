@@ -189,15 +189,15 @@ const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
           updatedAt: lottery.updatedAt,
         },
 
-        participants: participants.map((p: any) => ({
-          _id: p._id,
-          name: p.userId?.name,
-          email: p.userId?.email,
-          phone: p.userId?.phone,
-          city: p.userId?.city,
-          status: p.status,
-          paymentProof: p.paymentProof,
-        })),
+        // participants: participants.map((p: any) => ({
+        //   _id: p._id,
+        //   name: p.userId?.name,
+        //   email: p.userId?.email,
+        //   phone: p.userId?.phone,
+        //   city: p.userId?.city,
+        //   status: p.status,
+        //   paymentProof: p.paymentProof,
+        // })),
 
         winners: winners.map((w: any) => ({
           _id: w._id,
@@ -211,7 +211,7 @@ const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
           rank: w.rank,
         })),
 
-        paymentProofs,
+        // paymentProofs,
 
         stats: {
           totalParticipants,
