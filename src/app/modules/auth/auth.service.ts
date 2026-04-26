@@ -381,6 +381,7 @@ import { twilioService } from "../twilioService/sendOtpWithVerify";
 import { IAuthResetPassword, IChangePassword } from "../../../types/auth";
 import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
+import cryptoToken from "../../../util/cryptoToken";
 
 
 export const normalizeIdentifier = (value: string) =>
@@ -519,7 +520,7 @@ const verifyOtpToDB = async (payload: {
   }
 
 
-  const resetToken = crypto.randomUUID();
+  const resetToken = cryptoToken();
 
   await ResetToken.create({
     user: user._id,
@@ -601,35 +602,49 @@ const resetPasswordToDB = async (
 
 const changePasswordToDB = async (
   user: JwtPayload,
-  payload: IChangePassword
+  payload: IChangePassword,
 ) => {
-  const dbUser = await User.findById(user.id).select("+password");
-
-  if (!dbUser) throw new ApiError(400, "User not found");
-
-  const isMatch = await bcrypt.compare(
-    payload.currentPassword,
-    dbUser.password
-  );
-
-  if (!isMatch) throw new ApiError(400, "Wrong password");
-
-  if (payload.currentPassword === payload.newPassword) {
-    throw new ApiError(400, "New password must be different");
+  const { currentPassword, newPassword, confirmPassword } = payload;
+  const isExistUser = await User.findById(user.id).select("+password");
+  if (!isExistUser) {
+    throw new ApiError(400, "User doesn't exist!");
   }
 
-  if (payload.newPassword !== payload.confirmPassword) {
-    throw new ApiError(400, "Password mismatch");
+  // current password match
+  if (
+    currentPassword &&
+    !(await User.isMatchPassword(currentPassword, isExistUser.password))
+  ) {
+    throw new ApiError(400, "Password is incorrect");
   }
 
-  dbUser.password = await bcrypt.hash(
-    payload.newPassword,
-    Number(config.bcrypt_salt_rounds)
+  // newPassword and current password
+  if (currentPassword === newPassword) {
+    throw new ApiError(
+      400,
+      "Please give different password from current password",
+    );
+  }
+
+  // new password and confirm password check
+  if (newPassword !== confirmPassword) {
+    throw new ApiError(
+      400,
+      "Password and Confirm password doesn't matched",
+    );
+  }
+
+  // hash password
+  const hashPassword = await bcrypt.hash(
+    newPassword,
+    Number(config.bcrypt_salt_rounds),
   );
 
-  await dbUser.save();
+  const updateData = {
+    password: hashPassword,
+  };
 
-  return { message: "Password changed successfully" };
+  await User.findOneAndUpdate({ _id: user.id }, updateData, { new: true });
 };
 
 
