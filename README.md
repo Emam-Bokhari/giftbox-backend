@@ -4,8 +4,5 @@
 
 
 
-
-4. lottery draw -> user,admin
-5. user participate -> admin
 6. support create -> admin
 7. payment approved, reject -> user

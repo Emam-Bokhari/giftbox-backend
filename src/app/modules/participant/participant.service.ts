@@ -6,51 +6,131 @@ import { LOTTERY_STATUS } from "../lottery/lottery.constant";
 import { TLotteryParticipant } from "./participant.interface";
 import QueryBuilder from "../../builder/queryBuilder";
 import { LOTTERY_PARTICIPANT_STATUS } from "./participant.constant";
+import { notificationHelper } from "../../builder/pushNotification";
+import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
+import { User } from "../user/user.model";
+import { USER_ROLES } from "../../../enums/user";
+import { sendNotifications } from "../../../helpers/notificationsHelper";
+
+// const createParticipantToDB = async (payload: TLotteryParticipant) => {
+//     const { lotteryId, userId, paymentProof } = payload;
+
+//     // validation
+//     if (!lotteryId || !userId || !paymentProof) {
+//         throw new ApiError(StatusCodes.BAD_REQUEST, "Missing required fields");
+//     }
+
+//    // check lottery exists
+//     const lottery = await Lottery.findById(lotteryId);
+
+//     if (!lottery) {
+//         throw new ApiError(StatusCodes.NOT_FOUND, "Lottery not found");
+//     }
+
+//     // check lottery status
+//     if (lottery.status !== LOTTERY_STATUS.ACTIVE) {
+//         throw new ApiError(
+//             StatusCodes.BAD_REQUEST,
+//             "Only active lottery can be joined"
+//         );
+//     }
+
+//     // check participant already joined
+//     const alreadyJoined = await LotteryParticipant.findOne({
+//         lotteryId,
+//         userId,
+//     });
+
+//     if (alreadyJoined) {
+//         throw new ApiError(
+//             StatusCodes.CONFLICT,
+//             "You already joined this lottery"
+//         );
+//     }
+
+//     const participant = await LotteryParticipant.create({
+//         lotteryId,
+//         userId,
+//         paymentProof,
+//         amount: lottery.ticketPrice,
+//     });
+
+//     return participant;
+// };
 
 const createParticipantToDB = async (payload: TLotteryParticipant) => {
-    const { lotteryId, userId, paymentProof } = payload;
+  const { lotteryId, userId, paymentProof } = payload;
 
-    // validation
-    if (!lotteryId || !userId || !paymentProof) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "Missing required fields");
-    }
+  if (!lotteryId || !userId || !paymentProof) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Missing required fields");
+  }
 
-   // check lottery exists
-    const lottery = await Lottery.findById(lotteryId);
+  const lottery = await Lottery.findById(lotteryId);
 
-    if (!lottery) {
-        throw new ApiError(StatusCodes.NOT_FOUND, "Lottery not found");
-    }
+  if (!lottery) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Lottery not found");
+  }
 
-    // check lottery status
-    if (lottery.status !== LOTTERY_STATUS.ACTIVE) {
-        throw new ApiError(
-            StatusCodes.BAD_REQUEST,
-            "Only active lottery can be joined"
-        );
-    }
+  if (lottery.status !== LOTTERY_STATUS.ACTIVE) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Only active lottery can be joined"
+    );
+  }
 
-    // check participant already joined
-    const alreadyJoined = await LotteryParticipant.findOne({
-        lotteryId,
-        userId,
-    });
+  const alreadyJoined = await LotteryParticipant.findOne({
+    lotteryId,
+    userId,
+  });
 
-    if (alreadyJoined) {
-        throw new ApiError(
-            StatusCodes.CONFLICT,
-            "You already joined this lottery"
-        );
-    }
+  if (alreadyJoined) {
+    throw new ApiError(
+      StatusCodes.CONFLICT,
+      "You already joined this lottery"
+    );
+  }
 
-    const participant = await LotteryParticipant.create({
-        lotteryId,
-        userId,
-        paymentProof,
-        amount: lottery.ticketPrice,
-    });
+  const participant = await LotteryParticipant.create({
+    lotteryId,
+    userId,
+    paymentProof,
+    amount: lottery.ticketPrice,
+  });
 
-    return participant;
+  /* ================= NOTIFICATIONS ================= */
+  const notifications: Promise<any>[] = [];
+
+  /* ================= 1. ADMIN ================= */
+    const admin = await User.findOne({
+          role: USER_ROLES.SUPER_ADMIN,
+      }).select("_id");
+  
+      if (admin) {
+          await sendNotifications({
+              title: "New Lottery Participation",
+              text: `A user just joined "${lottery.title}"`,
+              receiver: admin._id.toString(),
+              type: NOTIFICATION_TYPE.ADMIN,
+              referenceId: participant._id.toString(),
+              referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY_PARTICIPANT,
+          });
+      }
+
+  /* ================= 2. USER (PARTICIPANT) ================= */
+  notifications.push(
+    notificationHelper.sendToUser(userId.toString(), {
+      title: "Successfully Joined Lottery",
+      body: `You are now part of "${lottery.title}"`,
+      type: NOTIFICATION_TYPE.USER,
+      data: {
+        lotteryId: lottery._id.toString(),
+      },
+    })
+  );
+
+  await Promise.allSettled(notifications);
+
+  return participant;
 };
 
 const getMyParticipatedLotteriesFromDB = async (
@@ -77,7 +157,7 @@ const getMyParticipatedLotteriesFromDB = async (
 
   const meta = await participantQuery.countTotal();
 
- 
+
   const data = rawData.map((p: any) => ({
     participantId: p._id,
     status: p.status,
@@ -115,10 +195,10 @@ const getMyParticipationDetailsFromDB = async (
     throw new ApiError(400, "Participant ID is required");
   }
 
-  
+
   const participant = await LotteryParticipant.findOne({
     _id: participantId,
-    userId, 
+    userId,
   }).populate({
     path: "lotteryId",
     select:
@@ -131,7 +211,7 @@ const getMyParticipationDetailsFromDB = async (
 
   const lottery: any = participant.lotteryId;
 
-  
+
   return {
     participantId: participant._id,
     status: participant.status,
@@ -155,6 +235,57 @@ const getMyParticipationDetailsFromDB = async (
   };
 };
 
+// const updateParticipantStatusIntoDB = async (
+//   id: string,
+//   status: LOTTERY_PARTICIPANT_STATUS
+// ) => {
+//   if (!id) {
+//     throw new ApiError(400, "Participant ID is required");
+//   }
+
+//   if (!status) {
+//     throw new ApiError(400, "Status is required");
+//   }
+
+//   const participant = await LotteryParticipant.findById(id);
+
+//   if (!participant) {
+//     throw new ApiError(404, "Participant not found");
+//   }
+
+//   // prevent double finalization
+//   if (
+//     participant.status === LOTTERY_PARTICIPANT_STATUS.APPROVED ||
+//     participant.status === LOTTERY_PARTICIPANT_STATUS.REJECTED
+//   ) {
+//     throw new ApiError(
+//       400,
+//       "This participant is already finalized"
+//     );
+//   }
+
+//   // validate transition
+//   const allowedTransitions = [
+//     `${LOTTERY_PARTICIPANT_STATUS.PENDING}->${LOTTERY_PARTICIPANT_STATUS.APPROVED}`,
+//     `${LOTTERY_PARTICIPANT_STATUS.PENDING}->${LOTTERY_PARTICIPANT_STATUS.REJECTED}`,
+//   ];
+
+//   const transition = `${participant.status}->${status}`;
+
+//   if (!allowedTransitions.includes(transition)) {
+//     throw new ApiError(
+//       400,
+//       `Invalid status transition: ${participant.status} → ${status}`
+//     );
+//   }
+
+//   participant.status = status;
+
+//   await participant.save();
+
+//   return participant;
+// };
+
 const updateParticipantStatusIntoDB = async (
   id: string,
   status: LOTTERY_PARTICIPANT_STATUS
@@ -167,7 +298,10 @@ const updateParticipantStatusIntoDB = async (
     throw new ApiError(400, "Status is required");
   }
 
-  const participant = await LotteryParticipant.findById(id);
+  const participant = await LotteryParticipant.findById(id).populate(
+    "userId",
+    "name"
+  );
 
   if (!participant) {
     throw new ApiError(404, "Participant not found");
@@ -178,13 +312,9 @@ const updateParticipantStatusIntoDB = async (
     participant.status === LOTTERY_PARTICIPANT_STATUS.APPROVED ||
     participant.status === LOTTERY_PARTICIPANT_STATUS.REJECTED
   ) {
-    throw new ApiError(
-      400,
-      "This participant is already finalized"
-    );
+    throw new ApiError(400, "This participant is already finalized");
   }
 
-  // validate transition
   const allowedTransitions = [
     `${LOTTERY_PARTICIPANT_STATUS.PENDING}->${LOTTERY_PARTICIPANT_STATUS.APPROVED}`,
     `${LOTTERY_PARTICIPANT_STATUS.PENDING}->${LOTTERY_PARTICIPANT_STATUS.REJECTED}`,
@@ -200,15 +330,54 @@ const updateParticipantStatusIntoDB = async (
   }
 
   participant.status = status;
-
   await participant.save();
+
+  /* ================= NOTIFICATIONS ================= */
+  const notifications: Promise<any>[] = [];
+
+  /* ================= 1. ADMIN (SOCKET ONLY) ================= */
+  const admin = await User.findOne({
+    role: USER_ROLES.SUPER_ADMIN,
+  }).select("_id");
+
+    if (admin) {
+        await sendNotifications({
+            title: "Lottery Participant Status Updated",
+            text: `Lottery "${participant.lotteryId}" has been ${status.toLowerCase()}`,
+            receiver: admin._id.toString(),
+            type: NOTIFICATION_TYPE.ADMIN,
+            referenceId: participant._id.toString(),
+            referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY_PARTICIPANT,
+        });
+    }
+
+  /* ================= 2. USER (PUSH + DB) ================= */
+  notifications.push(
+    notificationHelper.sendToUser(participant.userId.toString(), {
+      title:
+        status === LOTTERY_PARTICIPANT_STATUS.APPROVED
+          ? "Approved for Lottery"
+          : "Lottery Request Rejected",
+      body:
+        status === LOTTERY_PARTICIPANT_STATUS.APPROVED
+          ? `You have been approved for "${participant.lotteryId}"`
+          : `Your lottery participation was rejected`,
+      type: NOTIFICATION_TYPE.USER,
+      data: {
+        participantId: participant._id.toString(),
+        status,
+      },
+    })
+  );
+
+  await Promise.allSettled(notifications);
 
   return participant;
 };
 
 export const LotteryParticipantServices = {
-    createParticipantToDB,
-    getMyParticipatedLotteriesFromDB,
-    getMyParticipationDetailsFromDB,
-    updateParticipantStatusIntoDB,
+  createParticipantToDB,
+  getMyParticipatedLotteriesFromDB,
+  getMyParticipationDetailsFromDB,
+  updateParticipantStatusIntoDB,
 };

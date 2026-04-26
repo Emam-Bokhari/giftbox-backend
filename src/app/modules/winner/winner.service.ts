@@ -10,7 +10,8 @@ import QueryBuilder from "../../builder/queryBuilder";
 import { User } from "../user/user.model";
 import { USER_ROLES } from "../../../enums/user";
 import { notificationHelper } from "../../builder/pushNotification";
-import { NOTIFICATION_TYPE } from "../notification/notification.constant";
+import { NOTIFICATION_REFERENCE_MODEL, NOTIFICATION_TYPE } from "../notification/notification.constant";
+import { sendNotifications } from "../../../helpers/notificationsHelper";
 
 /* ================= SECURE SHUFFLE ================= */
 const secureShuffle = (array: any[]) => {
@@ -214,16 +215,14 @@ const drawLotteryWinnersIntoDB = async (payload: {
   }).select("_id");
 
   if (admin) {
-    notifications.push(
-      notificationHelper.sendToUser(admin._id.toString(), {
-        title: "🏆 Lottery Draw Completed",
-        body: `Lottery "${lottery.title}" result published`,
-        type: NOTIFICATION_TYPE.ADMIN,
-        data: {
-          lotteryId: lottery._id.toString(),
-        },
-      })
-    );
+    await sendNotifications({
+      title: "New Lottery Winners Announced",
+      text: `Lottery "${lottery.title}" result published`,
+      receiver: admin._id.toString(),
+      type: NOTIFICATION_TYPE.ADMIN,
+      referenceId: lottery._id.toString(),
+      referenceModel: NOTIFICATION_REFERENCE_MODEL.LOTTERY_WINNER,
+    });
   }
 
   /* ================= 2. WINNERS ================= */
