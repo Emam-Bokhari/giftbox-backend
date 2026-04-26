@@ -101,9 +101,59 @@ const getMyParticipatedLotteriesFromDB = async (
   };
 };
 
+const getMyParticipationDetailsFromDB = async (
+  userId: string,
+  participantId: string
+) => {
+  if (!userId) {
+    throw new ApiError(400, "User ID is required");
+  }
 
+  if (!participantId) {
+    throw new ApiError(400, "Participant ID is required");
+  }
+
+  
+  const participant = await LotteryParticipant.findOne({
+    _id: participantId,
+    userId, 
+  }).populate({
+    path: "lotteryId",
+    select:
+      "title description banner ticketPrice status mode startAt endAt",
+  });
+
+  if (!participant) {
+    throw new ApiError(404, "Participation not found");
+  }
+
+  const lottery: any = participant.lotteryId;
+
+  
+  return {
+    participantId: participant._id,
+    status: participant.status,
+    paymentProof: participant.paymentProof,
+    createdAt: participant.createdAt,
+
+    lottery: {
+      id: lottery?._id,
+      title: lottery?.title,
+      description: lottery?.description,
+      banner: lottery?.banner,
+      ticketPrice: lottery?.ticketPrice,
+      status: lottery?.status,
+      mode: lottery?.mode,
+      startAt: lottery?.startAt,
+      endAt: lottery?.endAt,
+    },
+
+    amount: lottery?.ticketPrice,
+  };
+};
 
 export const LotteryParticipantServices = {
     createParticipantToDB,
     getMyParticipatedLotteriesFromDB,
+    getMyParticipationDetailsFromDB,
 };
