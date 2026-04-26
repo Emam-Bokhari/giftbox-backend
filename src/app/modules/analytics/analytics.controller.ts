@@ -3,7 +3,7 @@ import sendResponse from "../../../shared/sendResponse";
 import { AnalyticsServices } from "./analytics.service";
 
 const getFinanceAndPaymentsStats = catchAsync(async (req, res) => {
-    const result = await AnalyticsServices.getFinanceAndPaymentsStatsFromDB();
+    const result = await AnalyticsServices.getFinanceAndPaymentsStatsFromDB(req.query);
     sendResponse(res, {
         statusCode: 200,
         success: true,

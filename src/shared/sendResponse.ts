@@ -4,7 +4,6 @@ type IData<T> = {
   success: boolean;
   statusCode: number;
   message?: string;
-
   pagination?: {
     page: number;
     limit: number;
@@ -13,7 +12,6 @@ type IData<T> = {
   };
   meta?: any;
   stats?: Record<string, any>;
-
   data?: T;
 };
 
@@ -21,9 +19,7 @@ const sendResponse = <T>(res: Response, data: IData<T>) => {
   const resData = {
     success: data.success,
     message: data.message,
-
     data: data.data,
-
     meta: data.meta,
     stats: data.stats,
 
