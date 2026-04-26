@@ -1,5 +1,7 @@
 import { model, Schema } from "mongoose";
 import { TSupport } from "./support.interface";
+import { SUPPORT_STATUS } from "./support.constant";
+
 
 const supportSchema = new Schema<TSupport>(
   {
@@ -27,6 +29,11 @@ const supportSchema = new Schema<TSupport>(
       type: String,
       default: "",
       required: false,
+    },
+    status: {
+      type: String,
+      enum: Object.values(SUPPORT_STATUS),
+      default: SUPPORT_STATUS.PENDING,
     },
   },
   {

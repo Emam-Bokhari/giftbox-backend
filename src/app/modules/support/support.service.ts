@@ -7,6 +7,7 @@ import { User } from "../user/user.model";
 import { TSupport } from "./support.interface";
 import { Support } from "./support.model";
 import QueryBuilder from "../../builder/queryBuilder";
+import { SUPPORT_STATUS } from "./support.constant";
 
 const PRIMARY_COLOR = "#22143b";
 const TEXT_COLOR = "#ffffff";
@@ -192,6 +193,28 @@ const getSupportByIdFromDB = async (id: string) => {
   return support;
 };
 
+const reviewSupportByAdminToDB = async (
+  supportId: string,
+  status: SUPPORT_STATUS,
+) => {
+  // validation: only allow specific statuses
+  if (![SUPPORT_STATUS.RESOLVED].includes(status)) {
+    throw new ApiError(400, "Invalid support status update request");
+  }
+
+  const support = await Support.findById(supportId);
+
+  if (!support) {
+    throw new ApiError(404, "Support not found");
+  }
+
+  support.status = status;
+
+  await support.save();
+
+  return support;
+};
+
 const deleteSupportByIdFromDB = async (id: string) => {
   const support = await Support.findByIdAndDelete(id);
   if (!support) {
@@ -205,5 +228,6 @@ export const SupportServices = {
   support,
   getAllSupportsFromDB,
   getSupportByIdFromDB,
+  reviewSupportByAdminToDB,
   deleteSupportByIdFromDB,
 };
