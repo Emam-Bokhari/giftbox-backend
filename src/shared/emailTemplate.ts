@@ -17,7 +17,7 @@ const baseLayout = (content: string) => `
             <tr>
               <td align="center" style="padding:30px 20px;background:${PRIMARY_COLOR};color:#ffffff;">
                 <h1 style="margin:0;font-size:22px;font-weight:600;letter-spacing:1px;">
-                  GoGreenMatrix
+                  GiftBox
                 </h1>
               </td>
             </tr>
@@ -33,7 +33,7 @@ const baseLayout = (content: string) => `
             <tr>
               <td align="center" 
                 style="padding:20px;font-size:12px;color:#888;background:#f7f7f7;">
-                © ${new Date().getFullYear()} GoGreenMatrix. All rights reserved.
+                © ${new Date().getFullYear()} GiftBox. All rights reserved.
               </td>
             </tr>
 
@@ -51,7 +51,7 @@ const createAccount = (values: ICreateAccount) => {
     </h2>
 
     <p>
-      Thank you for creating an account with GoGreenMatrix.
+      Thank you for creating an account with GiftBox.
       Please verify your email address using the code below.
     </p>
 
@@ -81,7 +81,7 @@ const createAccount = (values: ICreateAccount) => {
 
   return {
     to: values.email,
-    subject: "GoGreenMatrix – Verify Your Account",
+    subject: "GiftBox – Verify Your Account",
     html: baseLayout(content),
   };
 };
@@ -123,7 +123,7 @@ const resetPassword = (values: IResetPassword) => {
 
   return {
     to: values.email,
-    subject: "GoGreenMatrix – Password Reset Code",
+    subject: "GiftBox – Password Reset Code",
     html: baseLayout(content),
   };
 };

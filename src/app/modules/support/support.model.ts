@@ -13,7 +13,7 @@ const supportSchema = new Schema<TSupport>(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
     },
     subject: {
       type: String,
@@ -22,6 +22,11 @@ const supportSchema = new Schema<TSupport>(
     message: {
       type: String,
       required: true,
+    },
+    attachment: {
+      type: String,
+      default: "",
+      required: false,
     },
   },
   {

@@ -2,13 +2,21 @@ import express from "express";
 import { USER_ROLES } from "../../../enums/user";
 import auth from "../../middlewares/auth";
 import { SupportControllers } from "./support.controller";
+import fileUploadHandler from "../../middlewares/fileUploaderHandler";
+import parseAllFilesData from "../../middlewares/parseAllFileData";
+import { FOLDER_NAMES } from "../../../enums/files";
 
 const router = express.Router();
 
 router
   .route("/")
   .post(
-    auth(USER_ROLES.USER, USER_ROLES.HOST),
+    auth(USER_ROLES.USER,USER_ROLES.ADMIN),
+    fileUploadHandler(),
+     parseAllFilesData({
+        fieldName: FOLDER_NAMES.ATTACHMENT,
+        forceSingle: true,
+    }),
     SupportControllers.submitSupportRequest,
   )
   .get(
