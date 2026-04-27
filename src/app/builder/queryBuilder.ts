@@ -85,44 +85,49 @@ class QueryBuilder<T> {
 
   //   return this;
   // }
-  filter() {
-    const queryObj = { ...this.query };
+filter() {
+  const queryObj = { ...this.query };
 
-    const excludeFields = ["searchTerm", "sort", "limit", "page", "fields"];
+  const excludeFields = ["searchTerm", "sort", "limit", "page", "fields"];
 
-    excludeFields.forEach((el) => delete queryObj[el]);
+  excludeFields.forEach((el) => delete queryObj[el]);
 
-    // remove empty values
-    Object.keys(queryObj).forEach((key) => {
-      if (
-        queryObj[key] === undefined ||
-        queryObj[key] === null ||
-        queryObj[key] === ""
-      ) {
-        delete queryObj[key];
-      }
-    });
-
-    // ONLY allow valid fields
-    const allowedFilters = ["status", "mode", "city"];
-
-    const finalFilter: any = {};
-
-    allowedFilters.forEach((key) => {
-      if (queryObj[key]) {
-        finalFilter[key] = {
-          $regex: queryObj[key],
-          $options: "i", // 🔥 case-insensitive
-        };
-      }
-    });
-
-    if (Object.keys(finalFilter).length > 0) {
-      this.modelQuery = this.modelQuery.find(finalFilter);
+  // remove empty values
+  Object.keys(queryObj).forEach((key) => {
+    if (
+      queryObj[key] === undefined ||
+      queryObj[key] === null ||
+      queryObj[key] === ""
+    ) {
+      delete queryObj[key];
     }
+  });
 
-    return this;
+  const finalFilter: any = {};
+
+  /* ================= EXACT MATCH (ENUM) ================= */
+  if (queryObj.status) {
+    finalFilter.status = queryObj.status;
   }
+
+  if (queryObj.mode) {
+    finalFilter.mode = queryObj.mode;
+  }
+
+  /* ================= PARTIAL MATCH (TEXT) ================= */
+  if (queryObj.city) {
+    finalFilter.city = {
+      $regex: queryObj.city,
+      $options: "i",
+    };
+  }
+
+  if (Object.keys(finalFilter).length > 0) {
+    this.modelQuery = this.modelQuery.find(finalFilter);
+  }
+
+  return this;
+}
 
   //  SORT
   sort() {

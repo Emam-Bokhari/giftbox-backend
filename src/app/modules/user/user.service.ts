@@ -413,13 +413,13 @@ const getAllUsersFromDB = async (query: any) => {
   const activeUsers = await User.countDocuments({
     role: USER_ROLES.USER,
     verified: true,
-    status: "ACTIVE",
+    status: STATUS.ACTIVE,
   });
 
   const inactiveUsers = await User.countDocuments({
     role: USER_ROLES.USER,
     verified: true,
-    status: "INACTIVE",
+    status: STATUS.INACTIVE,
   });
 
   return {
