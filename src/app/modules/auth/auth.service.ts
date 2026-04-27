@@ -422,7 +422,7 @@ const loginUserFromDB = async (payload: {
 
   user.password = undefined as any;
 
-  return { token, user };
+  return { token };
 };
 
 const forgetPasswordToDB = async (identifier: string) => {
