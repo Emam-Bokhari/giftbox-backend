@@ -1,6 +1,6 @@
-import { connection } from "./../../../config/bull";
+import { connection } from "../../config/bull";
 import { Worker } from "bullmq";
-import { emailHelper } from "../../../helpers/emailHelper";
+import { emailHelper } from "../../helpers/emailHelper";
 
 export const emailWorker = new Worker(
   "emailQueue",

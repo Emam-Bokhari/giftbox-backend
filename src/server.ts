@@ -7,7 +7,7 @@ import { socketHelper } from "./helpers/socketHelper";
 import { Server } from "socket.io";
 import seedSuperAdmin from "./DB";
 import { initCronJobs } from "./config/cron";
-import "./app/modules/queue/email.worker";
+import "./queues/index";
 //uncaught exception
 process.on("uncaughtException", (error) => {
   errorLogger.error("uncaughtException Detected", error);
@@ -23,7 +23,6 @@ async function main() {
     // await redisClient.connect();
     // init cron jobs
     initCronJobs();
-   
 
     mongoose.connect(config.database_url as string);
     logger.info(colors.green("🚀 Database connected successfully"));

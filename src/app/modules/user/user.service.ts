@@ -22,7 +22,8 @@ import { normalizeIdentifier } from "../auth/auth.service";
 import { Types } from "mongoose";
 import { LotteryParticipant } from "../participant/participant.model";
 import { LotteryWinner } from "../winner/winner.model";
-import { emailQueue } from "../queue/email.queue";
+import { emailQueue } from "../../../queues/email/email.queue";
+
 
 // --- ADMIN SERVICES ---
 const createAdminToDB = async (payload: any): Promise<IUser> => {
