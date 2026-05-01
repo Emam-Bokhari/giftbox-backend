@@ -7,6 +7,7 @@ import path from "path";
 import v2Router from "./app/routes/v2";
 
 import router from "./app/routes";
+import { serverAdapter } from "./config/bullboard";
 
 const app: Application = express();
 
@@ -35,6 +36,7 @@ app.use(express.static("uploads"));
 //router
 app.use("/api/v1", router);
 router.use("/api/v2", v2Router);
+app.use("/admin/queues", serverAdapter.getRouter());
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Server is running...");

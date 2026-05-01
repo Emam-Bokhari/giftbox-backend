@@ -31,6 +31,9 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@bull-board/api": "^7.0.0",
+    "@bull-board/express": "^7.0.0",
+    "@bull-board/ui": "^7.0.0",
     "axios": "^1.13.2",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.76.4",
