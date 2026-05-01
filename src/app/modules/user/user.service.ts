@@ -22,6 +22,7 @@ import { normalizeIdentifier } from "../auth/auth.service";
 import { Types } from "mongoose";
 import { LotteryParticipant } from "../participant/participant.model";
 import { LotteryWinner } from "../winner/winner.model";
+import { emailQueue } from "../queue/email.queue";
 
 // --- ADMIN SERVICES ---
 const createAdminToDB = async (payload: any): Promise<IUser> => {
@@ -118,7 +119,13 @@ const createAdminToDB = async (payload: any): Promise<IUser> => {
   </body>
   `;
 
-  await emailHelper.sendEmail({
+  // await emailHelper.sendEmail({
+  //   to: payload.email,
+  //   subject: "Your Admin Account Credentials - GiftBox",
+  //   html: emailHtml,
+  // });
+
+  await emailQueue.add("admin-credentials-email", {
     to: payload.email,
     subject: "Your Admin Account Credentials - GiftBox",
     html: emailHtml,
@@ -248,7 +255,9 @@ const createUserToDB = async (payload: any) => {
       email: createUser.email,
     });
 
-    await emailHelper.sendEmail(template);
+    // await emailHelper.sendEmail(template);
+
+    await emailQueue.add("send-top-email", template);
   } else if (createUser.phone) {
     if (!createUser.countryCode) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Country code is required");
