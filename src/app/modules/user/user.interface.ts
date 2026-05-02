@@ -70,6 +70,7 @@ export type IUser = {
   /* ================= HYBRID IDENTITY ================= */
   email?: string;
   phone?: string;
+  // phoneNumber?:string;
   countryCode?: string;
   dateOfBirth?: Date;
 

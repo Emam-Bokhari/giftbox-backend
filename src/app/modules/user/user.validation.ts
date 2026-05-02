@@ -184,7 +184,18 @@ const updateUserZodSchema = z.object({
       .optional(),
 
     email: z.string().email().optional(),
-    phone: z.string().optional(),
+    phone: z
+      .string()
+      .trim()
+      .min(6)
+      .max(20)
+      .optional(),
+    // phoneNumber: z
+    //   .string()
+    //   .trim()
+    //   .min(6)
+    //   .max(20)
+    //   .optional(),
     countryCode: z.string().optional(),
     dateOfBirth: z.date().optional(),
 

@@ -74,13 +74,14 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 
 //update profile
 const updateProfile = catchAsync(async (req, res) => {
+  console.log(req.body,"DATA")
   const user: any = req.user;
   if ("role" in req.body) {
     delete req.body.role;
   }
-  if ("phone" in req.body) {
-    delete req.body.phone;
-  }
+  // if ("phone" in req.body) {
+  //   delete req.body.phone;
+  // }
   // If password is provided
   if (req.body.password) {
     req.body.password = await bcrypt.hash(

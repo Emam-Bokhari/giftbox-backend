@@ -197,10 +197,14 @@ const userSchema = new Schema<IUser, UserModal>(
 
     phone: {
       type: String,
-      sparse: true,
-      unique: true,
-      trim: true,
+      // sparse: true,
+      // unique: true,
+      // trim: true,
     },
+    // phoneNumber: {
+    //   type: String,
+    //   required: false,
+    // },
 
     countryCode: {
       type: String,
