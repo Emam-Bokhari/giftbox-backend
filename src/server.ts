@@ -6,24 +6,71 @@ import colors from "colors";
 import { socketHelper } from "./helpers/socketHelper";
 import { Server } from "socket.io";
 import seedSuperAdmin from "./DB";
-import { initCronJobs } from "./config/cron";
-//uncaught exception
-process.on("uncaughtException", (error) => {
-  errorLogger.error("uncaughtException Detected", error);
-  process.exit(1);
-});
+import {
+  emailWorker,
+  notificationWorker,
+  schedulerWorker,
+  emailQueue,
+  notificationQueue,
+  schedulerQueue,
+} from "./queues";
+import "./queues";
 
 let server: any;
 
+
+// GRACEFUL SHUTDOWN
+
+const shutdown = async () => {
+  logger.info("🛑 Graceful shutdown started...");
+
+  try {
+    // close workers
+    await Promise.all([
+      emailWorker.close(),
+      notificationWorker.close(),
+      schedulerWorker.close(),
+    ]);
+
+    // close queues
+    await Promise.all([
+      emailQueue.close(),
+      notificationQueue.close(),
+      schedulerQueue.close(),
+    ]);
+
+    // close HTTP server
+    if (server) {
+      server.close(() => {
+        logger.info("✅ Server closed");
+        process.exit(0);
+      });
+    } else {
+      process.exit(0);
+    }
+  } catch (error) {
+    errorLogger.error("❌ Shutdown error", error);
+    process.exit(1);
+  }
+};
+
+
+// uncaughtException
+
+process.on("uncaughtException", (error) => {
+  errorLogger.error("uncaughtException Detected", error);
+  shutdown(); // FIXED
+});
+
+
+// MAIN APP START
 async function main() {
   try {
-    // create super admin
+    // seed admin
     seedSuperAdmin();
-    // await redisClient.connect();
-    // init cron jobs
-    initCronJobs();
 
-    mongoose.connect(config.database_url as string);
+    // DB connect
+    await mongoose.connect(config.database_url as string);
     logger.info(colors.green("🚀 Database connected successfully"));
 
     const port =
@@ -31,46 +78,40 @@ async function main() {
 
     server = app.listen(port, config.ip_address as string, () => {
       logger.info(
-        colors.yellow(`♻️  Application listening on port:${config.port}`),
+        colors.yellow(`♻️ Application listening on port:${config.port}`),
       );
     });
 
-    //socket
+    // socket setup
     const io = new Server(server, {
       pingTimeout: 60000,
       pingInterval: 25000,
-      cors: {
-        origin: "*",
-      },
+      cors: { origin: "*" },
       transports: ["websocket", "polling"],
     });
 
     socketHelper.socket(io);
     //@ts-ignore
     global.io = io;
+
   } catch (error) {
     errorLogger.error(colors.red("🤢 Failed to connect Database"));
+    process.exit(1);
   }
 
-  //handle unhandledRejection
+
+  // unhandledRejection
+
   process.on("unhandledRejection", (error) => {
-    if (server) {
-      server.close(() => {
-        errorLogger.error("UnhandledRejection Detected", error);
-        process.exit(1);
-      });
-    } else {
-      process.exit(1);
-    }
+    errorLogger.error("UnhandledRejection Detected", error);
+    shutdown();
   });
 }
 
 main();
 
-//SIGTERM
-process.on("SIGTERM", () => {
-  logger.info("SIGTERM IS RECEIVE");
-  if (server) {
-    server.close();
-  }
-});
+
+// SIGNAL HANDLING
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
