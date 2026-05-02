@@ -12,7 +12,7 @@ router.post(
   "/send-message/:chatId",
   auth(
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.ADMIN,
   ),
@@ -25,7 +25,7 @@ router.get(
   "/:chatId",
   auth(
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.ADMIN,
   ),
@@ -36,7 +36,7 @@ router.delete(
   "/delete/:messageId",
   auth(
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.ADMIN,
   ),
@@ -48,7 +48,7 @@ router.patch(
   "/pin-unpin/:messageId",
   auth(
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.ADMIN,
   ),

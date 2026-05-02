@@ -46,12 +46,12 @@ const optionalAuth =
         throw new ApiError(StatusCodes.FORBIDDEN, "This user is blocked !!");
       }
 
-      if (user?.isDeleted) {
-        throw new ApiError(
-          StatusCodes.FORBIDDEN,
-          "This user account is deleted !!",
-        );
-      }
+      // if (user?.isDeleted) {
+      //   throw new ApiError(
+      //     StatusCodes.FORBIDDEN,
+      //     "This user account is deleted !!",
+      //   );
+      // }
 
       if (roles.length && !roles.includes(verifyUser?.role)) {
         throw new ApiError(

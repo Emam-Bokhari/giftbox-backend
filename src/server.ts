@@ -56,10 +56,9 @@ const shutdown = async () => {
 
 
 // uncaughtException
-
 process.on("uncaughtException", (error) => {
   errorLogger.error("uncaughtException Detected", error);
-  shutdown(); // FIXED
+  shutdown();
 });
 
 
@@ -101,7 +100,6 @@ async function main() {
 
 
   // unhandledRejection
-
   process.on("unhandledRejection", (error) => {
     errorLogger.error("UnhandledRejection Detected", error);
     shutdown();
@@ -112,6 +110,5 @@ main();
 
 
 // SIGNAL HANDLING
-
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);

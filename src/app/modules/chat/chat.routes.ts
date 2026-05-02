@@ -11,7 +11,7 @@ router.get(
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
   ),
   ChatController.getChats,
 );
@@ -22,7 +22,7 @@ router.get(
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
   ),
   ChatController.getChatImages,
 );
@@ -33,7 +33,7 @@ router.post(
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
   ),
   ChatController.createChat,
 );
@@ -44,7 +44,7 @@ router.patch(
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
   ),
   ChatController.markChatAsRead,
 );
@@ -55,7 +55,7 @@ router.delete(
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
     USER_ROLES.USER,
-    USER_ROLES.HOST,
+    // USER_ROLES.HOST,
   ),
   ChatController.deleteChat,
 );

@@ -1,6 +1,4 @@
-
-import { schedulerQueue } from "../../../queues/scheduler/scheduler.queue";
-
+import { schedulerQueue } from "../../../queues";
 
 export const initSchedulerQueue = async () => {
   // Remove all existing repeatable jobs first (cleanup stale ones)
