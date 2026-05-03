@@ -380,6 +380,7 @@ import { IAuthResetPassword, IChangePassword } from "../../../types/auth";
 import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 import cryptoToken from "../../../util/cryptoToken";
+import { FcmTokenService } from "../fcmToken/fcmService";
 
 export const normalizeIdentifier = (value: string) =>
   value.trim().toLowerCase();
@@ -399,8 +400,11 @@ const findUserByIdentifier = (identifier: string, selectPassword = false) => {
 const loginUserFromDB = async (payload: {
   identifier: string;
   password: string;
+  fcmToken?: string;
+  deviceId?: string;
+  deviceType?: 'ios' | 'android' | 'web';
 }) => {
-  const { identifier, password } = payload;
+  const { identifier, password, fcmToken, deviceId, deviceType } = payload;
 
   const user = await findUserByIdentifier(identifier).select("+password");
 
@@ -408,6 +412,15 @@ const loginUserFromDB = async (payload: {
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new ApiError(400, "Invalid credentials");
+
+  // Save device token if provided
+  if (fcmToken && deviceId && deviceType) {
+    await FcmTokenService.saveDeviceToken(user._id, {
+      fcmToken,
+      deviceId,
+      deviceType,
+    });
+  }
 
   const token = jwtHelper.createToken(
     {

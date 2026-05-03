@@ -446,17 +446,6 @@ const getAllUsersFromDB = async (query: any) => {
   };
 };
 
-// const getUserByIdFromDB = async (id: string) => {
-//   const result = await User.findOne({
-//     _id: id,
-//     role: USER_ROLES.USER,
-//   });
-
-//   if (!result)
-//     throw new ApiError(404, "No user is found in the database by this ID");
-
-//   return result;
-// };
 
 const getUserByIdFromDB = async (id: string) => {
   const user = await User.findOne({

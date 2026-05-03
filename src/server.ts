@@ -65,11 +65,11 @@ process.on("uncaughtException", (error) => {
 // MAIN APP START
 async function main() {
   try {
+    await mongoose.connect(config.database_url as string);
     // seed admin
     seedSuperAdmin();
 
     // DB connect
-    await mongoose.connect(config.database_url as string);
     logger.info(colors.green("🚀 Database connected successfully"));
 
     const port =
