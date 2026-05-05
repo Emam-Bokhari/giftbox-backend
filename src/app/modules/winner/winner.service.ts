@@ -42,90 +42,6 @@ const drawRandomWinners = (participants: any[], winnerCount: number) => {
   }));
 };
 
-// main service
-// const drawLotteryWinnersIntoDB = async (payload: {
-//   lotteryId: string;
-//   mode: WINNER_SELECTED_BY;
-//   winnerCount: number;
-//   selectedUserIds?: string[];
-// }) => {
-//   const { lotteryId, mode, winnerCount, selectedUserIds } = payload;
-
-//   if (!lotteryId) {
-//     throw new ApiError(400, "Lottery ID is required");
-//   }
-
-//   const lottery = await Lottery.findById(lotteryId);
-
-//   if (!lottery) {
-//     throw new ApiError(404, "Lottery not found");
-//   }
-
-//   if (lottery.status === LOTTERY_STATUS.DRAWN) {
-//     throw new ApiError(400, "Lottery already drawn");
-//   }
-
-//   /* ================= GET APPROVED PARTICIPANTS ================= */
-//   const approvedParticipants = await LotteryParticipant.find({
-//     lotteryId,
-//     status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
-//   });
-
-//   if (!approvedParticipants.length) {
-//     throw new ApiError(400, "No approved participants found");
-//   }
-
-//   let winners: { userId: any; rank: number }[] = [];
-
-//   /* ================= RANDOM MODE ================= */
-//   if (mode === WINNER_SELECTED_BY.RANDOM) {
-//     winners = drawRandomWinners(approvedParticipants, winnerCount);
-//   }
-
-//   /* ================= MANUAL MODE ================= */
-//   if (mode === WINNER_SELECTED_BY.MANUAL) {
-//     if (!selectedUserIds || selectedUserIds.length === 0) {
-//       throw new ApiError(400, "Selected users required for manual mode");
-//     }
-
-//     winners = approvedParticipants
-//       .filter((p) => selectedUserIds.includes(p.userId.toString()))
-//       .map((w, index) => ({
-//         userId: w.userId,
-//         rank: index + 1,
-//       }));
-
-//     if (!winners.length) {
-//       throw new ApiError(400, "No valid winners selected");
-//     }
-//   }
-
-//   /* ================= SAVE WINNERS ================= */
-//   await LotteryWinner.insertMany(
-//     winners.map((w) => ({
-//       lotteryId,
-//       userId: w.userId,
-//       selectedBy: mode,
-//       rank: w.rank,
-//     }))
-//   );
-
-//   /* ================= FETCH POPULATED WINNERS (FIX) ================= */
-//   const populatedWinners = await LotteryWinner.find({ lotteryId })
-//     .populate("userId", "name email phone city profileImage")
-//     .sort({ rank: 1 });
-
-//   /* ================= FINALIZE LOTTERY ================= */
-//   lottery.status = LOTTERY_STATUS.DRAWN;
-//   await lottery.save();
-
-//   return {
-//     lotteryId,
-//     mode,
-//     totalWinners: populatedWinners.length,
-//     winners: populatedWinners,
-//   };
-// };
 
 const drawLotteryWinnersIntoDB = async (payload: {
   lotteryId: string;
@@ -206,6 +122,12 @@ const drawLotteryWinnersIntoDB = async (payload: {
   // finalize lottery
   lottery.status = LOTTERY_STATUS.DRAWN;
   await lottery.save();
+
+  // update participants status to DRAWN
+  await LotteryParticipant.updateMany(
+    { lotteryId, status: LOTTERY_PARTICIPANT_STATUS.APPROVED },
+    { status: LOTTERY_PARTICIPANT_STATUS.DRAWN },
+  );
 
   // notifications
   const notifications: Promise<any>[] = [];
