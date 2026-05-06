@@ -14,107 +14,6 @@ import { LOTTERY_MODE, LOTTERY_STATUS } from "./lottery.constant";
 import { TLottery } from "./lottery.interface";
 import { Lottery } from "./lottery.model";
 
-// const createLotteryToDB = async (payload: TLottery) => {
-//     const {
-//         title,
-//         description,
-//         banner,
-//         ticketPrice,
-//         currency,
-//         mode,
-//         startAt,
-//         endAt,
-//     } = payload;
-
-//     if (!title || !ticketPrice || !currency || !mode || !endAt) {
-//         throw new ApiError(400, "Missing required fields");
-//     }
-
-//     const endTime = new Date(endAt);
-//     if (isNaN(endTime.getTime())) {
-//         throw new ApiError(400, "Invalid end date");
-//     }
-
-//     // generate ticket number
-//     const ticketNumber = await generateTicketId();
-//     payload.ticketNumber = ticketNumber;
-
-//     // only ONE ACTIVE lottery allowed
-
-//     if (mode === LOTTERY_MODE.INSTANT) {
-//         const activeExists = await Lottery.exists({
-//             status: LOTTERY_STATUS.ACTIVE,
-//         });
-
-//         if (activeExists) {
-//             throw new ApiError(
-//                 400,
-//                 "Another active lottery already exists. Please end it first."
-//             );
-//         }
-//     }
-
-//     // determine status safely
-
-//     let status: LOTTERY_STATUS;
-//     let startTime: Date | undefined;
-
-//     switch (mode) {
-//         case LOTTERY_MODE.INSTANT: {
-//             status = LOTTERY_STATUS.ACTIVE;
-//             startTime = new Date();
-//             break;
-//         }
-
-//         case LOTTERY_MODE.SCHEDULE: {
-//             if (!startAt) {
-//                 throw new ApiError(
-//                     400,
-//                     "Start time is required for schedule mode"
-//                 );
-//             }
-
-//             const parsedStart = new Date(startAt);
-//             if (isNaN(parsedStart.getTime())) {
-//                 throw new ApiError(400, "Invalid start date");
-//             }
-
-//             if (parsedStart >= endTime) {
-//                 throw new ApiError(
-//                     400,
-//                     "Start time must be before end time"
-//                 );
-//             }
-
-//             status = LOTTERY_STATUS.SCHEDULED;
-//             startTime = parsedStart;
-//             break;
-//         }
-
-//         case LOTTERY_MODE.DRAFT: {
-//             status = LOTTERY_STATUS.DRAFT;
-//             break;
-//         }
-
-//         default:
-//             throw new ApiError(400, "Invalid lottery mode");
-//     }
-
-//     const lottery = await Lottery.create({
-//         ticketNumber,
-//         title,
-//         description,
-//         banner,
-//         ticketPrice,
-//         currency,
-//         mode,
-//         status,
-//         startAt: startTime,
-//         endAt: endTime,
-//     });
-
-//     return lottery;
-// };
 
 const createLotteryToDB = async (payload: TLottery) => {
     const {
@@ -269,9 +168,65 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
     const data = await lotteryQuery.modelQuery;
     const meta = await lotteryQuery.countTotal();
 
+    if (!data || data.length === 0) {
+        return {
+            meta,
+            data,
+        };
+    }
+
+    const lotteryIds = data.map((l) => l._id);
+
+    const statsAgg = await LotteryParticipant.aggregate([
+        { $match: { lotteryId: { $in: lotteryIds } } },
+        {
+            $group: {
+                _id: "$lotteryId",
+                pending: {
+                    $sum: { $cond: [{ $eq: ["$status", "PENDING"] }, 1, 0] },
+                },
+                approved: {
+                    $sum: { $cond: [{ $eq: ["$status", "APPROVED"] }, 1, 0] },
+                },
+                rejected: {
+                    $sum: { $cond: [{ $eq: ["$status", "REJECTED"] }, 1, 0] },
+                },
+            },
+        },
+    ]);
+
+    const statsMap = statsAgg.reduce((acc: any, curr: any) => {
+        acc[curr._id.toString()] = curr;
+        return acc;
+    }, {});
+
+    const enrichedData = data.map((lottery: any) => {
+        const lotteryObj = lottery.toObject();
+        const stats = statsMap[lottery._id.toString()] || {
+            pending: 0,
+            approved: 0,
+            rejected: 0,
+        };
+
+        const totalParticipants =
+            stats.pending + stats.approved + stats.rejected;
+        const revenue = stats.approved * (lottery.ticketPrice || 0);
+
+        return {
+            ...lotteryObj,
+            stats: {
+                totalParticipants,
+                pending: stats.pending,
+                approved: stats.approved,
+                rejected: stats.rejected,
+                revenue,
+            },
+        };
+    });
+
     return {
         meta,
-        data,
+        data: enrichedData,
     };
 };
 

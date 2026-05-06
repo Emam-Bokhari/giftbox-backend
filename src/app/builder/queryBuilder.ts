@@ -33,7 +33,7 @@ class QueryBuilder<T> {
       });
     }
 
-    // 🔥 IMPORTANT: guard empty OR
+    // MPORTANT: guard empty OR
     if (orConditions.length === 0) return this;
 
     this.modelQuery = this.modelQuery.find({
@@ -43,48 +43,7 @@ class QueryBuilder<T> {
     return this;
   }
 
-  // FILTER (fully generic)
-  //  filter() {
-  //   const queryObj = { ...this.query };
 
-  //   const excludeFields = [
-  //     "searchTerm",
-  //     "sort",
-  //     "limit",
-  //     "page",
-  //     "fields",
-  //   ];
-
-  //   excludeFields.forEach((el) => delete queryObj[el]);
-
-  //   // remove empty values
-  //   Object.keys(queryObj).forEach((key) => {
-  //     if (
-  //       queryObj[key] === undefined ||
-  //       queryObj[key] === null ||
-  //       queryObj[key] === ""
-  //     ) {
-  //       delete queryObj[key];
-  //     }
-  //   });
-
-  //   // ✅ ONLY allow valid fields (important for security)
-  //   const allowedFilters = ["status", "mode","city"];
-
-  //   const finalFilter: any = {};
-
-  //   allowedFilters.forEach((key) => {
-  //     if (queryObj[key]) {
-  //       finalFilter[key] = queryObj[key];
-  //     }
-  //   });
-
-  //   if (Object.keys(finalFilter).length > 0) {
-  //     this.modelQuery = this.modelQuery.find(finalFilter);
-  //   }
-
-  //   return this;
-  // }
 filter() {
   const queryObj = { ...this.query };
 
