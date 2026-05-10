@@ -14,8 +14,8 @@ export const initSchedulerQueue = async () => {
     { now: new Date() },
     {
       repeat: { pattern: "* * * * *" }, // every minute
-      jobId: "lottery-scheduler",        // unique ID to prevent duplicates
-    }
+      jobId: "lottery-scheduler", // unique ID to prevent duplicates
+    },
   );
 
   console.log("Lottery repeatable job registered");

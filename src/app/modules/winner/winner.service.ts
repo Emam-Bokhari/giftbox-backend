@@ -42,7 +42,6 @@ const drawRandomWinners = (participants: any[], winnerCount: number) => {
   }));
 };
 
-
 const drawLotteryWinnersIntoDB = async (payload: {
   lotteryId: string;
   mode: WINNER_SELECTED_BY;

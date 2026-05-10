@@ -18,7 +18,6 @@ import "./queues";
 
 let server: any;
 
-
 // GRACEFUL SHUTDOWN
 
 const shutdown = async () => {
@@ -54,13 +53,11 @@ const shutdown = async () => {
   }
 };
 
-
 // uncaughtException
 process.on("uncaughtException", (error) => {
   errorLogger.error("uncaughtException Detected", error);
   shutdown();
 });
-
 
 // MAIN APP START
 async function main() {
@@ -92,12 +89,10 @@ async function main() {
     socketHelper.socket(io);
     //@ts-ignore
     global.io = io;
-
   } catch (error) {
     errorLogger.error(colors.red("🤢 Failed to connect Database"));
     process.exit(1);
   }
-
 
   // unhandledRejection
   process.on("unhandledRejection", (error) => {
@@ -107,7 +102,6 @@ async function main() {
 }
 
 main();
-
 
 // SIGNAL HANDLING
 process.on("SIGINT", shutdown);

@@ -74,7 +74,7 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 
 //update profile
 const updateProfile = catchAsync(async (req, res) => {
-  console.log(req.body,"DATA")
+  console.log(req.body, "DATA");
   const user: any = req.user;
   if ("role" in req.body) {
     delete req.body.role;

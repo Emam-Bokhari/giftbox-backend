@@ -25,7 +25,7 @@ const sendEmail = async (values: ISendEmail) => {
     logger.info("Mail send successfully", info.accepted);
   } catch (error) {
     errorLogger.error("Email", error);
-     throw error;
+    throw error;
   }
 };
 

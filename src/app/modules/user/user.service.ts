@@ -24,7 +24,6 @@ import { LotteryParticipant } from "../participant/participant.model";
 import { LotteryWinner } from "../winner/winner.model";
 import { emailQueue } from "../../../queues/email/email.queue";
 
-
 // --- ADMIN SERVICES ---
 const createAdminToDB = async (payload: any): Promise<IUser> => {
   delete payload.phone;
@@ -321,7 +320,7 @@ const updateProfileToDB = async (
   payload: Partial<IUser>,
 ): Promise<Partial<IUser | null>> => {
   const { id } = user;
-  console.log(payload,"Paload")
+  console.log(payload, "Paload");
   const isExistUser = await User.isExistUserById(id);
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
@@ -445,7 +444,6 @@ const getAllUsersFromDB = async (query: any) => {
     },
   };
 };
-
 
 const getUserByIdFromDB = async (id: string) => {
   const user = await User.findOne({

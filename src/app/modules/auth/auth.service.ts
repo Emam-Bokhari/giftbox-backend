@@ -402,7 +402,7 @@ const loginUserFromDB = async (payload: {
   password: string;
   fcmToken?: string;
   deviceId?: string;
-  deviceType?: 'ios' | 'android' | 'web';
+  deviceType?: "ios" | "android" | "web";
 }) => {
   const { identifier, password, fcmToken, deviceId, deviceType } = payload;
 

@@ -43,50 +43,49 @@ class QueryBuilder<T> {
     return this;
   }
 
+  filter() {
+    const queryObj = { ...this.query };
 
-filter() {
-  const queryObj = { ...this.query };
+    const excludeFields = ["searchTerm", "sort", "limit", "page", "fields"];
 
-  const excludeFields = ["searchTerm", "sort", "limit", "page", "fields"];
+    excludeFields.forEach((el) => delete queryObj[el]);
 
-  excludeFields.forEach((el) => delete queryObj[el]);
+    // remove empty values
+    Object.keys(queryObj).forEach((key) => {
+      if (
+        queryObj[key] === undefined ||
+        queryObj[key] === null ||
+        queryObj[key] === ""
+      ) {
+        delete queryObj[key];
+      }
+    });
 
-  // remove empty values
-  Object.keys(queryObj).forEach((key) => {
-    if (
-      queryObj[key] === undefined ||
-      queryObj[key] === null ||
-      queryObj[key] === ""
-    ) {
-      delete queryObj[key];
+    const finalFilter: any = {};
+
+    /* ================= EXACT MATCH (ENUM) ================= */
+    if (queryObj.status) {
+      finalFilter.status = queryObj.status;
     }
-  });
 
-  const finalFilter: any = {};
+    if (queryObj.mode) {
+      finalFilter.mode = queryObj.mode;
+    }
 
-  /* ================= EXACT MATCH (ENUM) ================= */
-  if (queryObj.status) {
-    finalFilter.status = queryObj.status;
+    /* ================= PARTIAL MATCH (TEXT) ================= */
+    if (queryObj.city) {
+      finalFilter.city = {
+        $regex: queryObj.city,
+        $options: "i",
+      };
+    }
+
+    if (Object.keys(finalFilter).length > 0) {
+      this.modelQuery = this.modelQuery.find(finalFilter);
+    }
+
+    return this;
   }
-
-  if (queryObj.mode) {
-    finalFilter.mode = queryObj.mode;
-  }
-
-  /* ================= PARTIAL MATCH (TEXT) ================= */
-  if (queryObj.city) {
-    finalFilter.city = {
-      $regex: queryObj.city,
-      $options: "i",
-    };
-  }
-
-  if (Object.keys(finalFilter).length > 0) {
-    this.modelQuery = this.modelQuery.find(finalFilter);
-  }
-
-  return this;
-}
 
   //  SORT
   sort() {

@@ -5,4 +5,3 @@ export const emailQueue = new Queue("emailQueue", {
   connection,
   defaultJobOptions,
 });
-

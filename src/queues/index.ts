@@ -13,7 +13,6 @@ export { emailQueue } from "./email/email.queue";
 export { notificationQueue } from "./notification/notification.queue";
 export { schedulerQueue } from "./scheduler/scheduler.queue";
 
-
 initSchedulerQueue().catch((err) => {
   console.error("❌ Failed to init scheduler queue:", err);
 });
