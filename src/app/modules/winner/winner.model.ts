@@ -38,7 +38,7 @@ const lotteryWinnerSchema = new Schema<TLotteryWinner>(
   },
 );
 
-// lotteryWinnerSchema.index({ lotteryId: 1, userId: 1 }, { unique: true });
+lotteryWinnerSchema.index({ lotteryId: 1, userId: 1 }, { unique: true });
 lotteryWinnerSchema.index({ lotteryId: 1 });
 lotteryWinnerSchema.index({ userId: 1 });
 
