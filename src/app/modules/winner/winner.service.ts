@@ -279,6 +279,7 @@ const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
             email: w.userId?.email,
             phone: w.userId?.phone,
             city: w.userId?.city,
+            profileImage: w.userId?.profileImage,
           },
           selectedBy: w.selectedBy,
           rank: w.rank,
@@ -354,7 +355,7 @@ const getLotteryDrawHistoryByIdFromDB = async (
     lotteryId,
     paymentProof: { $exists: true },
   })
-    .populate("userId", "name email phone city")
+    .populate("userId", "name email phone city profileImage")
     .select("paymentProof status userId");
 
   const proofQuery = new QueryBuilder(proofBaseQuery, query)
@@ -414,8 +415,58 @@ const getLotteryDrawHistoryByIdFromDB = async (
   };
 };
 
+const getApprovedParticipantsFromDB = async (
+  lotteryId: string,
+  query: Record<string, unknown>,
+) => {
+  if (!lotteryId) {
+    throw new ApiError(400, "Lottery ID is required");
+  }
+
+  const lottery = await Lottery.findById(lotteryId);
+  if (!lottery) {
+    throw new ApiError(404, "Lottery not found");
+  }
+
+  const searchTerm = query?.searchTerm as string;
+  let userIds: any[] = [];
+
+  // if search term exists, find matching users first
+  if (searchTerm) {
+    const users = await User.find({
+      name: { $regex: searchTerm, $options: "i" },
+    }).select("_id");
+    userIds = users.map((u) => u._id);
+  }
+
+  // build query
+  const participantFilter: any = {
+    lotteryId,
+    status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+  };
+
+  if (searchTerm) {
+    participantFilter.userId = { $in: userIds };
+  }
+
+  const result = await LotteryParticipant.find(participantFilter)
+    .populate("userId", "name profileImage city")
+    .sort("-createdAt")
+    .lean();
+
+  const formattedResult = result.map((p: any) => ({
+    userId: p.userId?._id,
+    name: p.userId?.name,
+    city: p.userId?.city,
+    profileImage: p.userId?.profileImage,
+  }));
+
+  return formattedResult;
+};
+
 export const WinnerServices = {
   drawLotteryWinnersIntoDB,
   getLotteryDrawHistoryFromDB,
   getLotteryDrawHistoryByIdFromDB,
+  getApprovedParticipantsFromDB,
 };

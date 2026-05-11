@@ -47,8 +47,25 @@ const getLotteryDrawHistory = catchAsync(async (req, res) => {
   });
 });
 
+const getApprovedParticipants = catchAsync(async (req, res) => {
+  const { lotteryId } = req.params;
+
+  const result = await WinnerServices.getApprovedParticipantsFromDB(
+    lotteryId,
+    req.query,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Approved participants fetched successfully",
+    data: result,
+  });
+});
+
 export const WinnerControllers = {
   drawLotteryWinners,
   getLotteryDrawHistoryById,
   getLotteryDrawHistory,
+  getApprovedParticipants,
 };

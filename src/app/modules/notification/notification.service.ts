@@ -27,7 +27,12 @@ const getNotificationFromDB = async (
     read: false,
   });
 
-  const queryBuilder = new QueryBuilder(baseQuery, query).sort().paginate();
+  const queryBuilder = new QueryBuilder(baseQuery, {
+    ...query,
+    sort: query.sort || "-createdAt",
+  })
+    .sort()
+    .paginate();
 
   const result = await queryBuilder.modelQuery;
 
@@ -96,7 +101,12 @@ const adminNotificationFromDB = async (query: any) => {
     read: false,
   });
 
-  const queryBuilder = new QueryBuilder(baseQuery, query).sort().paginate();
+  const queryBuilder = new QueryBuilder(baseQuery, {
+    ...query,
+    sort: query.sort || "-createdAt",
+  })
+    .sort()
+    .paginate();
 
   const result = await queryBuilder.modelQuery;
 

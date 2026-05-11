@@ -26,4 +26,10 @@ router.get(
   WinnerControllers.getLotteryDrawHistoryById,
 );
 
+router.get(
+  "/approved-participants/:lotteryId",
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  WinnerControllers.getApprovedParticipants,
+);
+
 export const WinnerRoutes = router;
