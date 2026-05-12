@@ -53,6 +53,7 @@ const userSchema = new Schema<IUser, UserModal>(
     /* ================= SECURITY ================= */
     password: {
       type: String,
+      required: [true, "Password is required"],
       select: false,
       minlength: 8,
     },

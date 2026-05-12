@@ -31,8 +31,7 @@ const createUserZodSchema = z.object({
 
       password: z
         .string()
-        .min(8, "Password must be at least 8 characters")
-        .optional(),
+        .min(8, "Password must be at least 8 characters"),
 
       profileImage: z.string().optional(),
       coverImage: z.string().optional(),
