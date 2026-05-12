@@ -46,7 +46,9 @@ const getFinanceAndPaymentsStatsFromDB = async (query: any) => {
   const totalParticipations = allParticipations.length;
 
   const approvedParticipants = allParticipations.filter(
-    (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED,
+    (p) =>
+      p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED ||
+      p.status === LOTTERY_PARTICIPANT_STATUS.DRAWN,
   );
 
   const totalRevenue = approvedParticipants.reduce(
@@ -93,7 +95,12 @@ const getAdminDashboardStatsFromDB = async () => {
       LotteryParticipant.aggregate([
         {
           $match: {
-            status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+            status: {
+              $in: [
+                LOTTERY_PARTICIPANT_STATUS.APPROVED,
+                LOTTERY_PARTICIPANT_STATUS.DRAWN,
+              ],
+            },
           },
         },
         {
@@ -143,7 +150,12 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
   const ticketStats = await LotteryParticipant.aggregate([
     {
       $match: {
-        status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+        status: {
+          $in: [
+            LOTTERY_PARTICIPANT_STATUS.APPROVED,
+            LOTTERY_PARTICIPANT_STATUS.DRAWN,
+          ],
+        },
         createdAt: { $gte: startDate, $lte: endDate },
       },
     },

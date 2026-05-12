@@ -190,6 +190,9 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
         rejected: {
           $sum: { $cond: [{ $eq: ["$status", "REJECTED"] }, 1, 0] },
         },
+        drawn: {
+          $sum: { $cond: [{ $eq: ["$status", "DRAWN"] }, 1, 0] },
+        },
       },
     },
   ]);
@@ -205,10 +208,12 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
       pending: 0,
       approved: 0,
       rejected: 0,
+      drawn: 0,
     };
 
-    const totalParticipants = stats.pending + stats.approved + stats.rejected;
-    const revenue = stats.approved * (lottery.ticketPrice || 0);
+    const totalParticipants =
+      stats.pending + stats.approved + stats.rejected + stats.drawn;
+    const revenue = (stats.approved + stats.drawn) * (lottery.ticketPrice || 0);
 
     return {
       ...lotteryObj,
@@ -217,6 +222,7 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
         pending: stats.pending,
         approved: stats.approved,
         rejected: stats.rejected,
+        drawn: stats.drawn,
         revenue,
       },
     };
@@ -446,17 +452,19 @@ const getLotteryDashboardByIdFromDB = async (id: string, query: any) => {
 
   let pending = 0,
     approved = 0,
-    rejected = 0;
+    rejected = 0,
+    drawn = 0;
 
   statsAgg.forEach((s) => {
     if (s._id === "PENDING") pending = s.count;
     if (s._id === "APPROVED") approved = s.count;
     if (s._id === "REJECTED") rejected = s.count;
+    if (s._id === "DRAWN") drawn = s.count;
   });
 
-  const totalParticipants = pending + approved + rejected;
+  const totalParticipants = pending + approved + rejected + drawn;
 
-  const revenue = approved * lottery.ticketPrice;
+  const revenue = (approved + drawn) * lottery.ticketPrice;
 
   /* ================= RESPONSE SWITCH ================= */
   return {
@@ -466,6 +474,7 @@ const getLotteryDashboardByIdFromDB = async (id: string, query: any) => {
       pending,
       approved,
       rejected,
+      drawn,
       revenue,
     },
 

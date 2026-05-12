@@ -371,13 +371,15 @@ const getLotteryDrawHistoryByIdFromDB = async (
     lotteryId,
   });
 
-  const approvedParticipants = allParticipants.filter(
-    (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED,
-  );
+  const approvedParticipantsCount = allParticipants.filter(
+    (p) =>
+      p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED ||
+      p.status === LOTTERY_PARTICIPANT_STATUS.DRAWN,
+  ).length;
 
   const totalParticipants = allParticipants.length;
 
-  const revenue = approvedParticipants.length * (lottery.ticketPrice || 0);
+  const revenue = approvedParticipantsCount * (lottery.ticketPrice || 0);
 
   // final response
   return {
@@ -409,7 +411,7 @@ const getLotteryDrawHistoryByIdFromDB = async (
 
     stats: {
       totalParticipants,
-      approvedParticipants: approvedParticipants.length,
+      approvedParticipants: approvedParticipantsCount,
       revenue,
     },
   };
