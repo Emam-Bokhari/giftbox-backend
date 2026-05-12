@@ -76,7 +76,7 @@ const getAdminDashboardStatsFromDB = async () => {
       //  total users
       User.countDocuments({
         role: USER_ROLES.USER,
-        verified: true,
+        // verified: true,
       }),
 
       //  total draw completed
