@@ -225,11 +225,9 @@ const createUserToDB = async (payload: any) => {
 
   /* ================= CREATE USER ================= */
   const createUser = await User.create({
-    name: payload.name,
+    ...payload,
     email: email ? normalizeIdentifier(email) : undefined,
     phone: phone ? normalizeIdentifier(phone) : undefined,
-    countryCode: payload.countryCode,
-    password: payload.password,
     verified: false,
   });
 
