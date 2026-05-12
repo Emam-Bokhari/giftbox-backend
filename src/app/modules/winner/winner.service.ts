@@ -239,7 +239,9 @@ const getLotteryDrawHistoryFromDB = async (query: Record<string, unknown>) => {
       const totalParticipants = participants.length;
 
       const approvedParticipants = participants.filter(
-        (p) => p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED,
+        (p) =>
+          p.status === LOTTERY_PARTICIPANT_STATUS.APPROVED ||
+          p.status === LOTTERY_PARTICIPANT_STATUS.DRAWN,
       );
 
       const revenue = approvedParticipants.reduce((sum, p: any) => {
