@@ -107,7 +107,7 @@ const createLotteryToDB = async (payload: TLottery) => {
   if (admin) {
     await sendNotifications({
       title: "New Lottery Created",
-      text: `Lottery "${lottery.title}" has been created`,
+      text: `Lottery ${lottery.title} has been created`,
       receiver: admin._id.toString(),
       type: NOTIFICATION_TYPE.ADMIN,
       referenceId: lottery._id.toString(),

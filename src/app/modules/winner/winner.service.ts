@@ -139,7 +139,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
   if (admin) {
     await sendNotifications({
       title: "New Lottery Winners Announced",
-      text: `Lottery "${lottery.title}" result published`,
+      text: `Lottery ${lottery.title} result published`,
       receiver: admin._id.toString(),
       type: NOTIFICATION_TYPE.ADMIN,
       referenceId: lottery._id.toString(),
@@ -154,7 +154,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
     notifications.push(
       notificationHelper.sendToUser((winner.userId as any)._id.toString(), {
         title: "🎉 You Won!",
-        body: `Congratulations! You’ve won in "${lottery.title}". 🎉`,
+        body: `Congratulations! You’ve won in ${lottery.title}. 🎉`,
         type: NOTIFICATION_TYPE.USER,
         data: {
           lotteryId: lottery._id.toString(),
@@ -170,7 +170,7 @@ const drawLotteryWinnersIntoDB = async (payload: {
   notifications.push(
     notificationHelper.sendToBatch(participantUserIds, {
       title: "📢 Lottery Result Announced",
-      body: `Results for "${lottery.title}" have been published`,
+      body: `Results for ${lottery.title} have been published`,
       type: NOTIFICATION_TYPE.USER,
       data: {
         lotteryId: lottery._id.toString(),

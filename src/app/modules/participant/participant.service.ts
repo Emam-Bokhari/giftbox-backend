@@ -106,9 +106,11 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
   }).select("_id");
 
   if (admin) {
+    const user = await User.findById(userId).select("name");
+    const userName = user?.name || "A user";
     await sendNotifications({
       title: "New Lottery Participation",
-      text: `A user just joined "${lottery.title}"`,
+      text: `${userName} just joined ${lottery.title}`,
       receiver: admin._id.toString(),
       type: NOTIFICATION_TYPE.ADMIN,
       referenceId: participant._id.toString(),
@@ -120,7 +122,7 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
   notifications.push(
     notificationHelper.sendToUser(userId.toString(), {
       title: "Successfully Joined Lottery",
-      body: `You are now part of "${lottery.title}"`,
+      body: `You are now part of ${lottery.title}`,
       type: NOTIFICATION_TYPE.USER,
       data: {
         lotteryId: lottery._id.toString(),
@@ -295,10 +297,9 @@ const updateParticipantStatusIntoDB = async (
     throw new ApiError(400, "Status is required");
   }
 
-  const participant = await LotteryParticipant.findById(id).populate(
-    "userId",
-    "name",
-  );
+  const participant = await LotteryParticipant.findById(id)
+    .populate("userId", "name")
+    .populate("lotteryId", "title");
 
   if (!participant) {
     throw new ApiError(404, "Participant not found");
@@ -337,10 +338,13 @@ const updateParticipantStatusIntoDB = async (
     role: USER_ROLES.SUPER_ADMIN,
   }).select("_id");
 
+  const userName = (participant.userId as any)?.name || "A user";
+  const lotteryTitle = (participant.lotteryId as any)?.title || "lottery";
+
   if (admin) {
     await sendNotifications({
       title: "Lottery Participant Status Updated",
-      text: `Lottery "${participant.lotteryId}" has been ${status.toLowerCase()}`,
+      text: `${userName} for lottery ${lotteryTitle} has been ${status.toLowerCase()}`,
       receiver: admin._id.toString(),
       type: NOTIFICATION_TYPE.ADMIN,
       referenceId: participant._id.toString(),
@@ -357,8 +361,8 @@ const updateParticipantStatusIntoDB = async (
           : "Lottery Request Rejected",
       body:
         status === LOTTERY_PARTICIPANT_STATUS.APPROVED
-          ? `You have been approved for "${participant.lotteryId}"`
-          : `Your lottery participation was rejected`,
+          ? `You have been approved for ${lotteryTitle}`
+          : `Your lottery participation for ${lotteryTitle} was rejected`,
       type: NOTIFICATION_TYPE.USER,
       data: {
         participantId: participant._id.toString(),
