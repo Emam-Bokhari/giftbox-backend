@@ -235,7 +235,12 @@ const getYearlyRevenueStatsFromDB = async (year?: number) => {
   const stats = await LotteryParticipant.aggregate([
     {
       $match: {
-        status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+        status: {
+          $in: [
+            LOTTERY_PARTICIPANT_STATUS.APPROVED,
+            LOTTERY_PARTICIPANT_STATUS.DRAWN,
+          ],
+        },
         createdAt: {
           $gte: startDate,
           $lte: endDate,
