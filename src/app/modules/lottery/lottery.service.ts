@@ -189,7 +189,10 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
         },
         rejected: {
           $sum: { $cond: [{ $eq: ["$status", "REJECTED"] }, 1, 0] },
-        }
+        },
+        drawn: {
+          $sum: { $cond: [{ $eq: ["$status", "DRAWN"] }, 1, 0] },
+        },
       },
     },
   ]);
@@ -205,20 +208,24 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
       pending: 0,
       approved: 0,
       rejected: 0,
+      drawn: 0,
     };
 
     const totalParticipants =
-      stats.pending + stats.approved + stats.rejected + stats.drawn;
-    const approved = stats.approved + stats.drawn;
+      (stats.pending || 0) +
+      (stats.approved || 0) +
+      (stats.rejected || 0) +
+      (stats.drawn || 0);
+    const approved = (stats.approved || 0) + (stats.drawn || 0);
     const revenue = approved * (lottery.ticketPrice || 0);
 
     return {
       ...lotteryObj,
       stats: {
         totalParticipants,
-        pending: stats.pending,
+        pending: stats.pending || 0,
         approved,
-        rejected: stats.rejected,
+        rejected: stats.rejected || 0,
         revenue,
       },
     };
@@ -459,7 +466,7 @@ const getLotteryDashboardByIdFromDB = async (id: string, query: any) => {
 
   const totalParticipants = pending + approved + rejected;
 
-  const revenue = approved * lottery.ticketPrice;
+  const revenue = approved * (lottery.ticketPrice || 0);
 
   /* ================= RESPONSE SWITCH ================= */
   return {
