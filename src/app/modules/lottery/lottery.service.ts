@@ -189,10 +189,7 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
         },
         rejected: {
           $sum: { $cond: [{ $eq: ["$status", "REJECTED"] }, 1, 0] },
-        },
-        drawn: {
-          $sum: { $cond: [{ $eq: ["$status", "DRAWN"] }, 1, 0] },
-        },
+        }
       },
     },
   ]);
@@ -208,21 +205,20 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
       pending: 0,
       approved: 0,
       rejected: 0,
-      drawn: 0,
     };
 
     const totalParticipants =
       stats.pending + stats.approved + stats.rejected + stats.drawn;
-    const revenue = (stats.approved + stats.drawn) * (lottery.ticketPrice || 0);
+    const approved = stats.approved + stats.drawn;
+    const revenue = approved * (lottery.ticketPrice || 0);
 
     return {
       ...lotteryObj,
       stats: {
         totalParticipants,
         pending: stats.pending,
-        approved: stats.approved,
+        approved,
         rejected: stats.rejected,
-        drawn: stats.drawn,
         revenue,
       },
     };
@@ -457,14 +453,13 @@ const getLotteryDashboardByIdFromDB = async (id: string, query: any) => {
 
   statsAgg.forEach((s) => {
     if (s._id === "PENDING") pending = s.count;
-    if (s._id === "APPROVED") approved = s.count;
+    if (s._id === "APPROVED" || s._id === "DRAWN") approved += s.count;
     if (s._id === "REJECTED") rejected = s.count;
-    if (s._id === "DRAWN") drawn = s.count;
   });
 
-  const totalParticipants = pending + approved + rejected + drawn;
+  const totalParticipants = pending + approved + rejected;
 
-  const revenue = (approved + drawn) * lottery.ticketPrice;
+  const revenue = approved * lottery.ticketPrice;
 
   /* ================= RESPONSE SWITCH ================= */
   return {
@@ -474,7 +469,7 @@ const getLotteryDashboardByIdFromDB = async (id: string, query: any) => {
       pending,
       approved,
       rejected,
-      drawn,
+      drawn: 0,
       revenue,
     },
 
