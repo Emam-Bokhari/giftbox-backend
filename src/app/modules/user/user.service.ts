@@ -344,7 +344,7 @@ const updateProfileToDB = async (
 const getAllUsersFromDB = async (query: any) => {
   const baseQuery = User.find({
     role: USER_ROLES.USER,
-    verified: true,
+    // verified: true,
   });
 
   const queryBuilder = new QueryBuilder(baseQuery, query)
@@ -417,18 +417,18 @@ const getAllUsersFromDB = async (query: any) => {
   /* ================= GLOBAL STATS ================= */
   const totalUsers = await User.countDocuments({
     role: USER_ROLES.USER,
-    verified: true,
+    // verified: true,
   });
 
   const activeUsers = await User.countDocuments({
     role: USER_ROLES.USER,
-    verified: true,
+    // verified: true,
     status: STATUS.ACTIVE,
   });
 
   const inactiveUsers = await User.countDocuments({
     role: USER_ROLES.USER,
-    verified: true,
+    // verified: true,
     status: STATUS.INACTIVE,
   });
 

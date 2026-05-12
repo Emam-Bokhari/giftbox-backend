@@ -160,7 +160,7 @@ const getYearlyTicketStatsFromDB = async (year?: number) => {
     {
       $match: {
         role: USER_ROLES.USER,
-        verified: true,
+        // verified: true,
         createdAt: { $gte: startDate, $lte: endDate },
       },
     },
