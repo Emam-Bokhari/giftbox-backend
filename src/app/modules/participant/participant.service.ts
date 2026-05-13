@@ -161,7 +161,10 @@ const getMyParticipatedLotteriesFromDB = async (
 
   const data = rawData.map((p: any) => ({
     participantId: p._id,
-    status: p.status,
+    status:
+      p.lotteryId?.status === LOTTERY_STATUS.DRAWN
+        ? LOTTERY_PARTICIPANT_STATUS.DRAWN
+        : p.status,
     paymentProof: p.paymentProof,
     createdAt: p.createdAt,
 
@@ -213,7 +216,10 @@ const getMyParticipationDetailsFromDB = async (
 
   return {
     participantId: participant._id,
-    status: participant.status,
+    status:
+      lottery?.status === LOTTERY_STATUS.DRAWN
+        ? LOTTERY_PARTICIPANT_STATUS.DRAWN
+        : participant.status,
     paymentProof: participant.paymentProof,
     createdAt: participant.createdAt,
 
