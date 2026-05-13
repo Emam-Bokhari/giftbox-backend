@@ -29,9 +29,7 @@ const createUserZodSchema = z.object({
       countryCode: z.string().optional(),
       dateOfBirth: z.date().optional(),
 
-      password: z
-        .string()
-        .min(8, "Password must be at least 8 characters"),
+      password: z.string().min(8, "Password must be at least 8 characters"),
 
       profileImage: z.string().optional(),
       coverImage: z.string().optional(),
