@@ -131,6 +131,12 @@ const getActiveLotteryFromDB = async (userId: string) => {
     throw new ApiError(404, "No active lottery found");
   }
 
+  // check if user already participated
+  const isParticipated = await LotteryParticipant.exists({
+    lotteryId: activeLottery._id,
+    userId: userId,
+  });
+
   // role based response
   // ADMIN → limited fields
   if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.SUPER_ADMIN) {
@@ -139,11 +145,15 @@ const getActiveLotteryFromDB = async (userId: string) => {
       startAt: activeLottery.startAt,
       endAt: activeLottery.endAt,
       createdAt: activeLottery.createdAt,
+      isParticipated: !!isParticipated,
     };
   }
 
   // USER → full data
-  return activeLottery;
+  return {
+    ...activeLottery,
+    isParticipated: !!isParticipated,
+  };
 };
 
 const getLotteryByIdFromDB = async (id: string) => {

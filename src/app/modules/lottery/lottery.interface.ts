@@ -13,4 +13,5 @@ export type TLottery = {
   endAt: Date;
   createdAt: Date;
   updatedAt: Date;
+  isParticipated?: boolean;
 };
