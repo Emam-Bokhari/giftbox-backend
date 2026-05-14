@@ -374,6 +374,7 @@ import ApiError from "../../../errors/ApiErrors";
 import { jwtHelper } from "../../../helpers/jwtHelper";
 import { User } from "../user/user.model";
 import { ResetToken } from "../resetToken/resetToken.model";
+import { STATUS } from "../../../enums/user";
 import generateOTP from "../../../util/generateOTP";
 import { twilioService } from "../twilioService/sendOtpWithVerify";
 import { IAuthResetPassword, IChangePassword } from "../../../types/auth";
@@ -410,6 +411,10 @@ const loginUserFromDB = async (payload: {
 
   if (!user) throw new ApiError(400, "User doesn't exist");
 
+  if (user.status === STATUS.INACTIVE) {
+    throw new ApiError(403, "Your account has been deactivated");
+  }
+
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new ApiError(400, "Invalid credentials");
 
@@ -442,6 +447,10 @@ const forgetPasswordToDB = async (identifier: string) => {
   const user = await findUserByIdentifier(identifier);
 
   if (!user) throw new ApiError(400, "User not found");
+
+  if (user.status === STATUS.INACTIVE) {
+    throw new ApiError(403, "Your account has been deactivated");
+  }
 
   const otp = generateOTP();
 
@@ -483,6 +492,10 @@ const verifyOtpToDB = async (payload: { identifier: string; code: string }) => {
   );
 
   if (!user) throw new ApiError(400, "User not found");
+
+  if (user.status === STATUS.INACTIVE) {
+    throw new ApiError(403, "Your account has been deactivated");
+  }
 
   const auth = user.authentication;
 
@@ -559,6 +572,15 @@ const resetPasswordToDB = async (
   const isExistUser = await User.findById(isExistToken.user).select(
     "+authentication",
   );
+
+  if (!isExistUser) {
+    throw new ApiError(400, "User not found");
+  }
+
+  if (isExistUser.status === STATUS.INACTIVE) {
+    throw new ApiError(403, "Your account has been deactivated");
+  }
+
   console.log("=======", isExistUser);
   if (!isExistUser?.authentication?.isResetPassword) {
     throw new ApiError(
@@ -604,6 +626,10 @@ const changePasswordToDB = async (
   const isExistUser = await User.findById(user.id).select("+password");
   if (!isExistUser) {
     throw new ApiError(400, "User doesn't exist!");
+  }
+
+  if (isExistUser.status === STATUS.INACTIVE) {
+    throw new ApiError(403, "Your account has been deactivated");
   }
 
   // current password match
@@ -652,6 +678,10 @@ const newAccessTokenToUser = async (refreshToken: string) => {
 
   if (!user) throw new ApiError(401, "Unauthorized");
 
+  if (user.status === STATUS.INACTIVE) {
+    throw new ApiError(403, "Your account has been deactivated");
+  }
+
   const accessToken = jwtHelper.createToken(
     {
       id: user._id,
@@ -670,6 +700,10 @@ const resendOtpToDB = async (payload: { identifier: string }) => {
   const user = await findUserByIdentifier(payload.identifier);
 
   if (!user) throw new ApiError(404, "User not found");
+
+  if (user.status === STATUS.INACTIVE) {
+    throw new ApiError(403, "Your account has been deactivated");
+  }
 
   const otp = generateOTP();
 
