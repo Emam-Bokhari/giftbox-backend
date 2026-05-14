@@ -25,9 +25,7 @@ const createUserZodSchema = z.object({
 
       /* ================= HYBRID IDENTITY ================= */
       email: z.string().email().optional(),
-      phone: z.string({
-        required_error: "Phone number is required",
-      }),
+      phone: z.string().optional(),
       countryCode: z.string().optional(),
       dateOfBirth: z.date().optional(),
 

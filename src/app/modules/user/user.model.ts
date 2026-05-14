@@ -31,7 +31,7 @@ const userSchema = new Schema<IUser, UserModal>(
 
     phone: {
       type: String,
-      required: true,
+      required: false,
       // sparse: true,
       // unique: true,
       // trim: true,
@@ -43,7 +43,7 @@ const userSchema = new Schema<IUser, UserModal>(
 
     countryCode: {
       type: String,
-      default: "+223",
+      default: "+243",
     },
 
     dateOfBirth: {
