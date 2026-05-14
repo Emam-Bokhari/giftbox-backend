@@ -293,10 +293,17 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
         const currentValue = (lottery as any)[field];
         const newValue = payload[field];
 
-        const isSame =
-          currentValue instanceof Date && newValue
-            ? new Date(newValue).getTime() === currentValue.getTime()
-            : String(currentValue) === String(newValue);
+        let isSame = false;
+
+        if (
+          currentValue instanceof Date ||
+          (typeof currentValue === "string" && !isNaN(Date.parse(currentValue)))
+        ) {
+          isSame =
+            new Date(currentValue).getTime() === new Date(newValue).getTime();
+        } else {
+          isSame = String(currentValue) === String(newValue);
+        }
 
         if (!isSame) {
           throw new ApiError(
@@ -317,10 +324,17 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
         const currentValue = (lottery as any)[field];
         const newValue = payload[field];
 
-        const isSame =
-          currentValue instanceof Date && newValue
-            ? new Date(newValue).getTime() === currentValue.getTime()
-            : String(currentValue) === String(newValue);
+        let isSame = false;
+
+        if (
+          currentValue instanceof Date ||
+          (typeof currentValue === "string" && !isNaN(Date.parse(currentValue)))
+        ) {
+          isSame =
+            new Date(currentValue).getTime() === new Date(newValue).getTime();
+        } else {
+          isSame = String(currentValue) === String(newValue);
+        }
 
         if (!isSame) {
           throw new ApiError(

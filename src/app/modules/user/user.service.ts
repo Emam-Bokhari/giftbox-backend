@@ -206,7 +206,7 @@ const createUserToDB = async (payload: any) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, "City is required");
   }
 
-  if(!payload.phone) {
+  if (!payload.phone) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Phone number is required");
   }
 
