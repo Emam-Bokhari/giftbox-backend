@@ -296,7 +296,7 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
         const isSame =
           currentValue instanceof Date && newValue
             ? new Date(newValue).getTime() === currentValue.getTime()
-            : currentValue === newValue;
+            : String(currentValue) === String(newValue);
 
         if (!isSame) {
           throw new ApiError(
@@ -320,7 +320,7 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
         const isSame =
           currentValue instanceof Date && newValue
             ? new Date(newValue).getTime() === currentValue.getTime()
-            : currentValue === newValue;
+            : String(currentValue) === String(newValue);
 
         if (!isSame) {
           throw new ApiError(
