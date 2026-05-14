@@ -295,12 +295,33 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
 
         let isSame = false;
 
-        if (
+        const isCurrentDate =
           currentValue instanceof Date ||
-          (typeof currentValue === "string" && !isNaN(Date.parse(currentValue)))
-        ) {
-          isSame =
-            new Date(currentValue).getTime() === new Date(newValue).getTime();
+          (typeof currentValue === "string" && !isNaN(Date.parse(currentValue)));
+        const isNewDate =
+          newValue instanceof Date ||
+          (typeof newValue === "string" && !isNaN(Date.parse(newValue)));
+
+        if (isCurrentDate && isNewDate) {
+          const d1 = new Date(currentValue);
+          const d2 = new Date(newValue);
+
+          isSame = d1.getTime() === d2.getTime();
+
+          // extra check for different formats representing the same date
+          if (!isSame) {
+            isSame = d1.toISOString() === d2.toISOString();
+          }
+
+          // if newValue is just a date string (YYYY-MM-DD) or doesn't have time, compare only the date part
+          if (
+            !isSame &&
+            typeof newValue === "string" &&
+            (/^\d{4}-\d{2}-\d{2}$/.test(newValue) ||
+              (!newValue.includes("T") && !newValue.includes(":")))
+          ) {
+            isSame = d1.toISOString().split("T")[0] === d2.toISOString().split("T")[0];
+          }
         } else {
           isSame = String(currentValue) === String(newValue);
         }
@@ -326,12 +347,31 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
 
         let isSame = false;
 
-        if (
+        const isCurrentDate =
           currentValue instanceof Date ||
-          (typeof currentValue === "string" && !isNaN(Date.parse(currentValue)))
-        ) {
-          isSame =
-            new Date(currentValue).getTime() === new Date(newValue).getTime();
+          (typeof currentValue === "string" && !isNaN(Date.parse(currentValue)));
+        const isNewDate =
+          newValue instanceof Date ||
+          (typeof newValue === "string" && !isNaN(Date.parse(newValue)));
+
+        if (isCurrentDate && isNewDate) {
+          const d1 = new Date(currentValue);
+          const d2 = new Date(newValue);
+
+          isSame = d1.getTime() === d2.getTime();
+
+          if (!isSame) {
+            isSame = d1.toISOString() === d2.toISOString();
+          }
+
+          if (
+            !isSame &&
+            typeof newValue === "string" &&
+            (/^\d{4}-\d{2}-\d{2}$/.test(newValue) ||
+              (!newValue.includes("T") && !newValue.includes(":")))
+          ) {
+            isSame = d1.toISOString().split("T")[0] === d2.toISOString().split("T")[0];
+          }
         } else {
           isSame = String(currentValue) === String(newValue);
         }
