@@ -290,7 +290,20 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
 
     restrictedFields.forEach((field) => {
       if (payload[field] !== undefined) {
-        throw new ApiError(400, `Cannot update ${field} of an active lottery`);
+        const currentValue = (lottery as any)[field];
+        const newValue = payload[field];
+
+        const isSame =
+          currentValue instanceof Date && newValue
+            ? new Date(newValue).getTime() === currentValue.getTime()
+            : currentValue === newValue;
+
+        if (!isSame) {
+          throw new ApiError(
+            400,
+            `Cannot update ${field} of an active lottery`,
+          );
+        }
       }
     });
   }
@@ -301,19 +314,32 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
 
     restrictedFields.forEach((field) => {
       if (payload[field] !== undefined) {
-        throw new ApiError(
-          400,
-          `Cannot update ${field} of a scheduled lottery`,
-        );
+        const currentValue = (lottery as any)[field];
+        const newValue = payload[field];
+
+        const isSame =
+          currentValue instanceof Date && newValue
+            ? new Date(newValue).getTime() === currentValue.getTime()
+            : currentValue === newValue;
+
+        if (!isSame) {
+          throw new ApiError(
+            400,
+            `Cannot update ${field} of a scheduled lottery`,
+          );
+        }
       }
     });
   }
 
   // date validation
   // safe for DRAFT or allowed cases
-  if (payload.startAt && payload.endAt) {
-    const start = new Date(payload.startAt);
-    const end = new Date(payload.endAt);
+  const startAt = payload.startAt || lottery.startAt;
+  const endAt = payload.endAt || lottery.endAt;
+
+  if (startAt && endAt) {
+    const start = new Date(startAt);
+    const end = new Date(endAt);
 
     if (start >= end) {
       throw new ApiError(400, "Start time must be before end time");

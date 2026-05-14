@@ -31,6 +31,7 @@ const userSchema = new Schema<IUser, UserModal>(
 
     phone: {
       type: String,
+      required: true,
       // sparse: true,
       // unique: true,
       // trim: true,
