@@ -178,6 +178,14 @@ const updateAdminStatusByIdToDB = async (
     throw new ApiError(400, "Failed to change status by this user ID");
   }
 
+  if (status === STATUS.INACTIVE && user.email) {
+    const template = emailTemplate.accountDeactivated({
+      name: user.name,
+      email: user.email,
+    });
+    await emailQueue.add("account-deactivation-email", template);
+  }
+
   return result;
 };
 
@@ -549,6 +557,14 @@ const updateUserStatusByIdToDB = async (
   const result = await User.findByIdAndUpdate(id, { status }, { new: true });
   if (!result) {
     throw new ApiError(400, "Failed to change status by this user ID");
+  }
+
+  if (status === STATUS.INACTIVE && user.email) {
+    const template = emailTemplate.accountDeactivated({
+      name: user.name,
+      email: user.email,
+    });
+    await emailQueue.add("account-deactivation-email", template);
   }
 
   return result;

@@ -1,4 +1,4 @@
-import { ICreateAccount, IResetPassword } from "../types/emailTemplate";
+import { ICreateAccount, IResetPassword, IAccountStatus } from "../types/emailTemplate";
 
 const PRIMARY_COLOR = "#a90707";
 const BG_COLOR = "#ffffff";
@@ -128,7 +128,40 @@ const resetPassword = (values: IResetPassword) => {
   };
 };
 
+const accountDeactivated = (values: IAccountStatus) => {
+  const content = `
+    <h2 style="margin-top:0;color:${TEXT_COLOR};">
+      Account Deactivated
+    </h2>
+
+    <p>
+      Dear ${values.name},
+    </p>
+
+    <p>
+      Your account on GiftBox has been deactivated by the administrator. 
+      As a result, you will no longer be able to log in or access your account features.
+    </p>
+
+    <p>
+      If you believe this is a mistake or if you have any questions, please contact our support team.
+    </p>
+
+    <p style="margin-top:30px;">
+      Best regards,<br>
+      The GiftBox Team
+    </p>
+  `;
+
+  return {
+    to: values.email,
+    subject: "GiftBox – Account Deactivation Notice",
+    html: baseLayout(content),
+  };
+};
+
 export const emailTemplate = {
   createAccount,
   resetPassword,
+  accountDeactivated,
 };
