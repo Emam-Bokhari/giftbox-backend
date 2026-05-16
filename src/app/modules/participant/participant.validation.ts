@@ -28,6 +28,7 @@ const updateStatusZodSchema = z.object({
     status: z.enum([
       LOTTERY_PARTICIPANT_STATUS.APPROVED,
       LOTTERY_PARTICIPANT_STATUS.REJECTED,
+      LOTTERY_PARTICIPANT_STATUS.RETRY,
     ]),
   }),
 });

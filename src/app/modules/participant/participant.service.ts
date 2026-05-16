@@ -15,51 +15,7 @@ import { User } from "../user/user.model";
 import { USER_ROLES } from "../../../enums/user";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
 
-// const createParticipantToDB = async (payload: TLotteryParticipant) => {
-//     const { lotteryId, userId, paymentProof } = payload;
 
-//     // validation
-//     if (!lotteryId || !userId || !paymentProof) {
-//         throw new ApiError(StatusCodes.BAD_REQUEST, "Missing required fields");
-//     }
-
-//    // check lottery exists
-//     const lottery = await Lottery.findById(lotteryId);
-
-//     if (!lottery) {
-//         throw new ApiError(StatusCodes.NOT_FOUND, "Lottery not found");
-//     }
-
-//     // check lottery status
-//     if (lottery.status !== LOTTERY_STATUS.ACTIVE) {
-//         throw new ApiError(
-//             StatusCodes.BAD_REQUEST,
-//             "Only active lottery can be joined"
-//         );
-//     }
-
-//     // check participant already joined
-//     const alreadyJoined = await LotteryParticipant.findOne({
-//         lotteryId,
-//         userId,
-//     });
-
-//     if (alreadyJoined) {
-//         throw new ApiError(
-//             StatusCodes.CONFLICT,
-//             "You already joined this lottery"
-//         );
-//     }
-
-//     const participant = await LotteryParticipant.create({
-//         lotteryId,
-//         userId,
-//         paymentProof,
-//         amount: lottery.ticketPrice,
-//     });
-
-//     return participant;
-// };
 
 const createParticipantToDB = async (payload: TLotteryParticipant) => {
   const { lotteryId, userId, paymentProof } = payload;
@@ -86,16 +42,25 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
     userId,
   });
 
-  if (alreadyJoined) {
+  if (alreadyJoined && alreadyJoined.status !== LOTTERY_PARTICIPANT_STATUS.RETRY) {
     throw new ApiError(StatusCodes.CONFLICT, "You already joined this lottery");
   }
 
-  const participant = await LotteryParticipant.create({
-    lotteryId,
-    userId,
-    paymentProof,
-    amount: lottery.ticketPrice,
-  });
+  let participant;
+
+  if (alreadyJoined && alreadyJoined.status === LOTTERY_PARTICIPANT_STATUS.RETRY) {
+    alreadyJoined.paymentProof = paymentProof;
+    alreadyJoined.amount = lottery.ticketPrice;
+    alreadyJoined.status = LOTTERY_PARTICIPANT_STATUS.PENDING;
+    participant = await alreadyJoined.save();
+  } else {
+    participant = await LotteryParticipant.create({
+      lotteryId,
+      userId,
+      paymentProof,
+      amount: lottery.ticketPrice,
+    });
+  }
 
   // notifications
   const notifications: Promise<any>[] = [];
@@ -313,8 +278,7 @@ const updateParticipantStatusIntoDB = async (
 
   // prevent double finalization
   if (
-    participant.status === LOTTERY_PARTICIPANT_STATUS.APPROVED ||
-    participant.status === LOTTERY_PARTICIPANT_STATUS.REJECTED
+    participant.status === LOTTERY_PARTICIPANT_STATUS.APPROVED
   ) {
     throw new ApiError(400, "This participant is already finalized");
   }
@@ -322,6 +286,7 @@ const updateParticipantStatusIntoDB = async (
   const allowedTransitions = [
     `${LOTTERY_PARTICIPANT_STATUS.PENDING}->${LOTTERY_PARTICIPANT_STATUS.APPROVED}`,
     `${LOTTERY_PARTICIPANT_STATUS.PENDING}->${LOTTERY_PARTICIPANT_STATUS.REJECTED}`,
+    `${LOTTERY_PARTICIPANT_STATUS.REJECTED}->${LOTTERY_PARTICIPANT_STATUS.RETRY}`,
   ];
 
   const transition = `${participant.status}->${status}`;
