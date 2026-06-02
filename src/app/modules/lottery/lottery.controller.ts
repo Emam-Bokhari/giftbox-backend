@@ -15,14 +15,15 @@ const createLottery = catchAsync(async (req, res) => {
 
 const getActiveLottery = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
-  const activeLottery = await LotteryServices.getActiveLotteryFromDB(userId);
-
+  const activeLotteries = await LotteryServices.getActiveLotteriesFromDB(userId);
+  
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "Active lottery found successfully",
-    data: activeLottery,
+    message: "Active lotteries fetched successfully",
+    data: activeLotteries,
   });
+
 });
 
 const getLotteryById = catchAsync(async (req, res) => {

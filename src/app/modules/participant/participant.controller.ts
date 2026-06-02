@@ -9,7 +9,7 @@ const createParticipant = catchAsync(async (req, res) => {
     ...req.body,
     userId,
   });
-
+  
   sendResponse(res, {
     success: true,
     statusCode: 200,
@@ -31,7 +31,8 @@ const getMyParticipatedLotteries = catchAsync(async (req, res) => {
     success: true,
     statusCode: 200,
     message: "My participated lotteries fetched successfully",
-    data: result,
+    data: result.data,
+    meta: result.meta,
   });
 });
 

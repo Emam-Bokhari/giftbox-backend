@@ -27,17 +27,6 @@ export const schedulerWorker = new Worker(
     }).select("_id");
 
     for (const lottery of scheduledLotteries) {
-      const activeExists = await Lottery.exists({
-        status: LOTTERY_STATUS.ACTIVE,
-      });
-
-      if (activeExists) {
-        console.log(
-          `⚠️ Skipped Activation (Active exists) → Lottery ID: ${lottery._id}`,
-        );
-        continue;
-      }
-
       // update status to active
       lottery.status = LOTTERY_STATUS.ACTIVE;
       await lottery.save();

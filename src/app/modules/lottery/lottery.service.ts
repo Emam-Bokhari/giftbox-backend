@@ -38,19 +38,6 @@ const createLotteryToDB = async (payload: TLottery) => {
   const ticketNumber = await generateTicketId();
   payload.ticketNumber = ticketNumber;
 
-  if (mode === LOTTERY_MODE.INSTANT) {
-    const activeExists = await Lottery.exists({
-      status: LOTTERY_STATUS.ACTIVE,
-    });
-
-    if (activeExists) {
-      throw new ApiError(
-        400,
-        "Another active lottery already exists. Please end it first.",
-      );
-    }
-  }
-
   let status: LOTTERY_STATUS;
   let startTime: Date | undefined;
 
@@ -118,42 +105,52 @@ const createLotteryToDB = async (payload: TLottery) => {
   return lottery;
 };
 
-const getActiveLotteryFromDB = async (userId: string) => {
+const getActiveLotteriesFromDB = async (userId: string) => {
   const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
-  const activeLottery = await Lottery.findOne({
+  const activeLotteries = await Lottery.find({
     status: LOTTERY_STATUS.ACTIVE,
   }).lean();
 
-  if (!activeLottery) {
-    throw new ApiError(404, "No active lottery found");
+  if (!activeLotteries || activeLotteries.length === 0) {
+    return [];
   }
 
-  // check if user already participated
-  const isParticipated = await LotteryParticipant.exists({
-    lotteryId: activeLottery._id,
-    userId: userId,
-  });
+  // check if user already participated in each lottery
+  const enrichedLotteries = await Promise.all(
+    activeLotteries.map(async (lottery) => {
+      const isParticipated = await LotteryParticipant.exists({
+        lotteryId: lottery._id,
+        userId: userId,
+      });
 
-  // role based response
-  // ADMIN → limited fields
-  if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.SUPER_ADMIN) {
-    return {
-      title: activeLottery.title,
-      startAt: activeLottery.startAt,
-      endAt: activeLottery.endAt,
-      createdAt: activeLottery.createdAt,
-      isParticipated: !!isParticipated,
-    };
-  }
+      // role based response
+      // ADMIN → limited fields
+      if (
+        user.role === USER_ROLES.ADMIN ||
+        user.role === USER_ROLES.SUPER_ADMIN
+      ) {
+        return {
+          _id: lottery._id,
+          title: lottery.title,
+          startAt: lottery.startAt,
+          endAt: lottery.endAt,
+          createdAt: lottery.createdAt,
+          isParticipated: !!isParticipated,
+        };
+      }
 
-  // USER → full data
-  return {
-    ...activeLottery,
-    isParticipated: !!isParticipated,
-  };
+      // USER → full data
+      return {
+        ...lottery,
+        isParticipated: !!isParticipated,
+      };
+    }),
+  );
+
+  return enrichedLotteries;
 };
 
 const getLotteryByIdFromDB = async (id: string) => {
@@ -173,6 +170,7 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
     .sort()
     .paginate()
     .fields();
+    
 
   const data = await lotteryQuery.modelQuery;
   const meta = await lotteryQuery.countTotal();
@@ -614,7 +612,7 @@ const getLotteryWinnersByLotteryIdFromDB = async (lotteryId: string) => {
 
 export const LotteryServices = {
   createLotteryToDB,
-  getActiveLotteryFromDB,
+  getActiveLotteriesFromDB,
   getLotteryByIdFromDB,
   getAllLotteriesFromDB,
   getSingleLotteryFromDB,

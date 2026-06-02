@@ -330,8 +330,8 @@ const updateProfileToDB = async (
   payload: Partial<IUser>,
 ): Promise<Partial<IUser | null>> => {
   const { id } = user;
-  console.log(payload, "Paload");
   const isExistUser = await User.isExistUserById(id);
+
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
@@ -577,7 +577,7 @@ const deleteUserByIdFromD = async (id: string) => {
   });
 
   if (!user) {
-    throw new ApiError(404, "User doest not exist in the database");
+    throw new ApiError(404, "User does not exist in the database");
   }
 
   const result = await User.findByIdAndDelete(id);
