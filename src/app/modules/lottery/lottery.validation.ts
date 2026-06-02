@@ -42,6 +42,8 @@ const createLotteryZodSchema = z.object({
       .enum(Object.values(LOTTERY_MODE) as [string, ...string[]])
       .optional(),
 
+    manualParticipants: z.number().nonnegative().optional(),
+
     startAt: z.coerce.date().optional(),
 
     endAt: z.coerce.date({

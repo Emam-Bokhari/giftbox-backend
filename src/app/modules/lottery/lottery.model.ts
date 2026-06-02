@@ -52,6 +52,11 @@ const lotterySchema = new Schema<TLottery>(
       required: true,
     },
 
+    manualParticipants: {
+      type: Number,
+      default: 0,
+    },
+
     startAt: {
       type: Date,
     },

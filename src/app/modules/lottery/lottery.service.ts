@@ -7,6 +7,7 @@ import {
   NOTIFICATION_REFERENCE_MODEL,
   NOTIFICATION_TYPE,
 } from "../notification/notification.constant";
+import { LOTTERY_PARTICIPANT_STATUS } from "../participant/participant.constant";
 import { LotteryParticipant } from "../participant/participant.model";
 import { User } from "../user/user.model";
 import { LotteryWinner } from "../winner/winner.model";
@@ -22,6 +23,7 @@ const createLotteryToDB = async (payload: TLottery) => {
     ticketPrice,
     currency,
     mode,
+    manualParticipants,
     startAt,
     endAt,
   } = payload;
@@ -81,6 +83,7 @@ const createLotteryToDB = async (payload: TLottery) => {
     ticketPrice,
     currency,
     mode,
+    manualParticipants,
     status,
     startAt: startTime,
     endAt: endTime,
@@ -119,48 +122,70 @@ const getActiveLotteriesFromDB = async (userId: string) => {
   }
 
   // check if user already participated in each lottery
-  const enrichedLotteries = await Promise.all(
-    activeLotteries.map(async (lottery) => {
-      const isParticipated = await LotteryParticipant.exists({
-        lotteryId: lottery._id,
-        userId: userId,
-      });
+   const enrichedLotteries = await Promise.all(
+     activeLotteries.map(async (lottery) => {
+       const isParticipated = await LotteryParticipant.exists({
+         lotteryId: lottery._id,
+         userId: userId,
+       });
 
-      // role based response
-      // ADMIN → limited fields
-      if (
-        user.role === USER_ROLES.ADMIN ||
-        user.role === USER_ROLES.SUPER_ADMIN
-      ) {
-        return {
-          _id: lottery._id,
-          title: lottery.title,
-          startAt: lottery.startAt,
-          endAt: lottery.endAt,
-          createdAt: lottery.createdAt,
-          isParticipated: !!isParticipated,
-        };
-      }
+       // Count approved participants
+       const approvedCount = await LotteryParticipant.countDocuments({
+         lotteryId: lottery._id,
+         status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+       });
 
-      // USER → full data
-      return {
-        ...lottery,
-        isParticipated: !!isParticipated,
-      };
-    }),
-  );
+       const totalParticipants =
+         (lottery.manualParticipants || 0) + approvedCount;
+
+       // role based response
+       // ADMIN → limited fields
+       if (
+         user.role === USER_ROLES.ADMIN ||
+         user.role === USER_ROLES.SUPER_ADMIN
+       ) {
+         return {
+           _id: lottery._id,
+           title: lottery.title,
+           startAt: lottery.startAt,
+           endAt: lottery.endAt,
+           createdAt: lottery.createdAt,
+           isParticipated: !!isParticipated,
+           manualParticipants: totalParticipants,
+         };
+       }
+
+       // USER → full data
+       return {
+         ...lottery,
+         isParticipated: !!isParticipated,
+         manualParticipants: totalParticipants,
+       };
+     }),
+   );
 
   return enrichedLotteries;
 };
 
 const getLotteryByIdFromDB = async (id: string) => {
-  const lottery = await Lottery.findById(id);
+  const lottery = await Lottery.findById(id).lean();
 
   if (!lottery) {
     throw new ApiError(404, "Lottery not found");
   }
 
-  return lottery;
+  // Count approved participants
+  const approvedCount = await LotteryParticipant.countDocuments({
+    lotteryId: lottery._id,
+    status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+  });
+
+  const totalParticipants = (lottery.manualParticipants || 0) + approvedCount;
+
+  return {
+    ...lottery,
+    manualParticipants: totalParticipants,
+  };
 };
 
 const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
@@ -250,7 +275,7 @@ const getSingleLotteryFromDB = async (id: string) => {
     throw new ApiError(400, "Lottery ID is required");
   }
 
-  const lottery = await Lottery.findById(id);
+  const lottery = await Lottery.findById(id).lean();
 
   if (!lottery) {
     throw new ApiError(404, "Lottery not found");

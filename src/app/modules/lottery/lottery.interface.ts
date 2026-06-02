@@ -9,6 +9,7 @@ export type TLottery = {
   currency: string;
   status: LOTTERY_STATUS;
   mode: LOTTERY_MODE;
+  manualParticipants?: number;
   startAt?: Date;
   endAt: Date;
   createdAt: Date;
