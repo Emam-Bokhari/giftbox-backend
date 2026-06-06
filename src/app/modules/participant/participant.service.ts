@@ -110,7 +110,7 @@ const getMyParticipatedLotteriesFromDB = async (
 
   const baseQuery = LotteryParticipant.find({ userId }).populate({
     path: "lotteryId",
-    select: "title banner ticketPrice status startAt endAt",
+    select: "title banner ticketPrice status startAt endAt ticketNumber",
   });
 
   const participantQuery = new QueryBuilder(baseQuery, query)
@@ -138,6 +138,7 @@ const getMyParticipatedLotteriesFromDB = async (
       title: p.lotteryId?.title,
       banner: p.lotteryId?.banner,
       ticketPrice: p.lotteryId?.ticketPrice,
+      ticketNumber: p.lotteryId?.ticketNumber,
       status: p.lotteryId?.status,
       startAt: p.lotteryId?.startAt,
       endAt: p.lotteryId?.endAt,

@@ -36,7 +36,7 @@ const createLotteryToDB = async (payload: TLottery) => {
   if (isNaN(endTime.getTime())) {
     throw new ApiError(400, "Invalid end date");
   }
-
+  
   const ticketNumber = await generateTicketId();
   payload.ticketNumber = ticketNumber;
 
