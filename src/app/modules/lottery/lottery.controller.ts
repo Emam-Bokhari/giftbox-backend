@@ -28,7 +28,8 @@ const getActiveLottery = catchAsync(async (req, res) => {
 
 const getLotteryById = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const lottery = await LotteryServices.getLotteryByIdFromDB(id);
+  const { id: userId } = req.user;
+  const lottery = await LotteryServices.getLotteryByIdFromDB(id, userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,

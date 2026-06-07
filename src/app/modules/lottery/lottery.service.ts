@@ -167,12 +167,23 @@ const getActiveLotteriesFromDB = async (userId: string) => {
   return enrichedLotteries;
 };
 
-const getLotteryByIdFromDB = async (id: string) => {
+const getLotteryByIdFromDB = async (id: string, userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
   const lottery = await Lottery.findById(id).lean();
 
   if (!lottery) {
     throw new ApiError(404, "Lottery not found");
   }
+
+  // check if user already participated
+  const isParticipated = await LotteryParticipant.exists({
+    lotteryId: lottery._id,
+    userId: userId,
+  });
 
   // Count approved participants
   const approvedCount = await LotteryParticipant.countDocuments({
@@ -182,8 +193,27 @@ const getLotteryByIdFromDB = async (id: string) => {
 
   const totalParticipants = (lottery.manualParticipants || 0) + approvedCount;
 
+  // role based response
+  // ADMIN → limited fields
+  if (
+    user.role === USER_ROLES.ADMIN ||
+    user.role === USER_ROLES.SUPER_ADMIN
+  ) {
+    return {
+      _id: lottery._id,
+      title: lottery.title,
+      startAt: lottery.startAt,
+      endAt: lottery.endAt,
+      createdAt: lottery.createdAt,
+      isParticipated: !!isParticipated,
+      manualParticipants: totalParticipants,
+    };
+  }
+
+  // USER → full data
   return {
     ...lottery,
+    isParticipated: !!isParticipated,
     manualParticipants: totalParticipants,
   };
 };
