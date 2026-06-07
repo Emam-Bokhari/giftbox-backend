@@ -14,6 +14,12 @@ const app: Application = express();
 app.set("views", path.join(__dirname, "..", "views"));
 app.set("view engine", "ejs");
 
+app.get("/download/app", (req, res) => {
+  const filePath = path.join(process.cwd(), "download", "app", "gift-box.apk");
+
+  res.download(filePath, "gift-box.apk"); // auto download trigger
+});
+
 // morgan
 app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
