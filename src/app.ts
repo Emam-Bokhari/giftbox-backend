@@ -34,7 +34,11 @@ app.use(
       "http://10.10.7.28:5174",
       "http://195.35.6.13:5173",
       "http://72.60.212.213:3000",
-      "http://72.60.212.213:4173"
+      "http://72.60.212.213:4173",
+      "https://coffretcadeaurdc.tech",
+      "https://admin.admin-coffret-cadeau.com",
+      "https://admin-coffret-cadeau.com",
+      "https://api.coffretcadeaurdc.tech",
     ],
     credentials: true,
   }),
