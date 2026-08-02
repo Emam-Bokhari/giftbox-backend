@@ -2,7 +2,9 @@
 
 ## Overview
 
-Gift Box Backend API (Coffret Cadeau RDC) is a backend service built with Node.js, Express, TypeScript, and MongoDB. The system provides core functionalities for managing lottery and gift-box events, participant entries, winner declarations, user authentication, push notifications, real-time WebSocket communications, and background task queue handling using BullMQ and Redis.
+Gift Box Backend API is the backend service behind a lottery and gift-box event platform. It handles the core operations of the system, including user authentication, lottery management participant registration, winner announcements, push notifications, real-time communication, and background task processing.
+
+Built with Node.js, Express, TypeScript, and MongoDB, the backend uses Socket.IO for real-time updates, Firebase Cloud Messaging (FCM) for push notifications, and BullMQ with Redis to process background jobs efficiently.
 
 ## Design Reference
 
@@ -165,14 +167,8 @@ The application requires the following environment variables defined in `.env`:
 | `start` | `node dist/server.js` | Runs the compiled JavaScript application in production mode. |
 | `build` | `tsc` | Compiles TypeScript source files into JavaScript inside the `dist` directory. |
 | `format` | `prettier . --write` | Formats codebase using Prettier. |
-| `generate:diagram` | `ts-node scripts/generate-erd.ts && ts-node scripts/render-erd.ts && ts-node scripts/export-erd.ts` | Generates, renders, and exports Draw.io ER diagrams using AST analysis and Puppeteer. |
 
 
-### Queue Management Dashboard
-BullMQ background job queues are monitored via the Bull-Board UI dashboard available at:
-```
-http://<host>:<port>/admin/queues
-```
 
 ## Database
 
@@ -302,7 +298,7 @@ The application implements a centralized error handling strategy:
 
 ISC
 
-## Maintainer
+## Developer
 
 Moshfiqur Rahman - moshfiqurrahman37@gmail.com
 
