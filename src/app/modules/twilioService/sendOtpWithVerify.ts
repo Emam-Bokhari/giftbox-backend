@@ -21,25 +21,25 @@ class TwilioService {
 
     // Configure country codes
     this.phoneConfig = {
-      defaultCountryCode: "+880", // Bangladesh default
+      defaultCountryCode: "+880",
       countryCodes: [
-        "+1", // USA/Canada
-        "+44", // UK
-        "+91", // India
-        "+880", // Bangladesh
-        "+92", // Pakistan
-        "+966", // Saudi Arabia
-        "+971", // UAE
-        "+60", // Malaysia
-        "+65", // Singapore
-        "+86", // China
-        "+81", // Japan
-        "+82", // South Korea
+        "+1",
+        "+44",
+        "+91",
+        "+880",
+        "+92",
+        "+966",
+        "+971",
+        "+60",
+        "+65",
+        "+86",
+        "+81",
+        "+82",
       ],
     };
   }
 
-  // ✅ Format phone number to E.164 format
+  // Format phone number to E.164 format
   private formatPhoneNumber(phoneNumber: string, countryCode?: string): string {
     let phone = phoneNumber.trim().replace(/\s+/g, ""); // Remove spaces
 

@@ -10,8 +10,8 @@ Built with Node.js, Express, TypeScript, and MongoDB, the backend uses Socket.IO
 
 The backend APIs in this project were developed based on the approved UI/UX design.
 
-| Resource | Link |
-|----------|------|
+| Resource     | Link                                                                                                                               |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Figma Design | [Click Here](https://www.figma.com/design/fdHi4cQB55RxffOE58F51L/jamallbk-%7C%7C-Giftbox-app?node-id=1-2&p=f&t=RrO9l9wqALWJOxxV-0) |
 
 > The UI/UX design was provided by the project team and is referenced here to help understand the API flow and business requirements.
@@ -31,25 +31,25 @@ The backend APIs in this project were developed based on the approved UI/UX desi
 
 ## Tech Stack
 
-| Category | Technology |
-|----------|------------|
-| Runtime | Node.js |
-| Language | TypeScript |
-| Framework | Express.js |
-| Database | MongoDB |
-| ODM | Mongoose |
-| Authentication | JWT, Passport (Google, Facebook), Firebase Admin |
-| Validation | Zod |
-| Real-Time Communication | Socket.IO |
-| Cache & Queue | Redis, ioredis, BullMQ |
-| Queue Dashboard | Bull-Board |
-| Task Scheduling | Node-Cron |
-| SMS Provider | Twilio |
-| Push Notifications | Firebase Cloud Messaging (FCM) |
-| Email Provider | Nodemailer |
-| File Storage | Multer (Local Disk Storage) |
-| Logging | Winston (Daily Rotate File), Morgan |
-| Templating Engine | EJS |
+| Category                | Technology                                       |
+| ----------------------- | ------------------------------------------------ |
+| Runtime                 | Node.js                                          |
+| Language                | TypeScript                                       |
+| Framework               | Express.js                                       |
+| Database                | MongoDB                                          |
+| ODM                     | Mongoose                                         |
+| Authentication          | JWT, Passport (Google, Facebook), Firebase Admin |
+| Validation              | Zod                                              |
+| Real-Time Communication | Socket.IO                                        |
+| Cache & Queue           | Redis, ioredis, BullMQ                           |
+| Queue Dashboard         | Bull-Board                                       |
+| Task Scheduling         | Node-Cron                                        |
+| SMS Provider            | Twilio                                           |
+| Push Notifications      | Firebase Cloud Messaging (FCM)                   |
+| Email Provider          | Nodemailer                                       |
+| File Storage            | Multer (Local Disk Storage)                      |
+| Logging                 | Winston (Daily Rotate File), Morgan              |
+| Templating Engine       | EJS                                              |
 
 ## Project Structure
 
@@ -97,12 +97,14 @@ Ensure you have the following installed on your system:
 ### Step-by-Step Setup
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url>
    cd jamallbk-backend
    ```
 
 2. **Install project dependencies:**
+
    ```bash
    npm install
    ```
@@ -112,6 +114,7 @@ Ensure you have the following installed on your system:
 
 4. **Start Redis Server:**
    You can start Redis using Docker Compose:
+
    ```bash
    docker-compose up -d
    ```
@@ -125,50 +128,48 @@ Ensure you have the following installed on your system:
 
 The application requires the following environment variables defined in `.env`:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `IP` | No | IP address binding for the HTTP server |
-| `PORT` | Yes | Port number on which the HTTP server listens |
-| `DATABASE_URL` | Yes | MongoDB connection string URI |
-| `NODE_ENV` | Yes | Deployment environment mode (`development`, `production`, `test`) |
-| `BCRYPT_SALT_ROUNDS` | Yes | Salt rounds used for password hashing |
-| `JWT_SECRET` | Yes | Secret key used for signing JWT access tokens |
-| `JWT_EXPIRE_IN` | Yes | Expiration time for JWT access tokens |
-| `JWT_REFRESH_SECRET` | Yes | Secret key used for signing JWT refresh tokens |
-| `JWT_REFRESH_EXPIRES_IN` | Yes | Expiration time for JWT refresh tokens |
-| `REDIS_HOST` | Yes | Hostname of the Redis server |
-| `REDIS_PORT` | Yes | Port number of the Redis server |
-| `REDIS_PASSWORD` | No | Authentication password for the Redis server |
-| `REDIS_DB` | No | Redis database index number |
-| `START_CRON` | No | Flag to enable or disable background scheduled cron tasks |
-| `CLIENT_URL` | Yes | Origin URL of the frontend web application |
-| `BASE_URL` | Yes | Base URL of this backend API service |
-| `DASHBOARD_URL` | No | URL of the admin management dashboard |
-| `FIREBASE_CLIENT_EMAIL` | Yes | Firebase Admin SDK client email |
-| `FIREBASE_PRIVATE_KEY` | Yes | Firebase Admin SDK private key |
-| `FIREBASE_PROJECT_ID` | Yes | Firebase project ID |
-| `EMAIL_FROM` | Yes | Sender email address for outgoing emails |
-| `EMAIL_USER` | Yes | SMTP authentication username |
-| `EMAIL_PORT` | Yes | SMTP connection port |
-| `EMAIL_HOST` | Yes | SMTP server hostname |
-| `EMAIL_PASS` | Yes | SMTP authentication password |
-| `SUPPORT_RECEIVER_EMAIL` | Yes | Destination email for user support queries |
-| `ADMIN_EMAIL` | Yes | Email address for seeding the default Super Admin user |
-| `ADMIN_PASSWORD` | Yes | Password for seeding the default Super Admin user |
-| `TWILIO_ACCOUNT_SID` | Yes | Twilio account SID |
-| `TWILIO_AUTH_TOKEN` | Yes | Twilio authentication token |
-| `TWILIO_SERVICE_SID` | Yes | Twilio verification service SID |
+| Variable                 | Required | Description                                                       |
+| ------------------------ | -------- | ----------------------------------------------------------------- |
+| `IP`                     | No       | IP address binding for the HTTP server                            |
+| `PORT`                   | Yes      | Port number on which the HTTP server listens                      |
+| `DATABASE_URL`           | Yes      | MongoDB connection string URI                                     |
+| `NODE_ENV`               | Yes      | Deployment environment mode (`development`, `production`, `test`) |
+| `BCRYPT_SALT_ROUNDS`     | Yes      | Salt rounds used for password hashing                             |
+| `JWT_SECRET`             | Yes      | Secret key used for signing JWT access tokens                     |
+| `JWT_EXPIRE_IN`          | Yes      | Expiration time for JWT access tokens                             |
+| `JWT_REFRESH_SECRET`     | Yes      | Secret key used for signing JWT refresh tokens                    |
+| `JWT_REFRESH_EXPIRES_IN` | Yes      | Expiration time for JWT refresh tokens                            |
+| `REDIS_HOST`             | Yes      | Hostname of the Redis server                                      |
+| `REDIS_PORT`             | Yes      | Port number of the Redis server                                   |
+| `REDIS_PASSWORD`         | No       | Authentication password for the Redis server                      |
+| `REDIS_DB`               | No       | Redis database index number                                       |
+| `START_CRON`             | No       | Flag to enable or disable background scheduled cron tasks         |
+| `CLIENT_URL`             | Yes      | Origin URL of the frontend web application                        |
+| `BASE_URL`               | Yes      | Base URL of this backend API service                              |
+| `DASHBOARD_URL`          | No       | URL of the admin management dashboard                             |
+| `FIREBASE_CLIENT_EMAIL`  | Yes      | Firebase Admin SDK client email                                   |
+| `FIREBASE_PRIVATE_KEY`   | Yes      | Firebase Admin SDK private key                                    |
+| `FIREBASE_PROJECT_ID`    | Yes      | Firebase project ID                                               |
+| `EMAIL_FROM`             | Yes      | Sender email address for outgoing emails                          |
+| `EMAIL_USER`             | Yes      | SMTP authentication username                                      |
+| `EMAIL_PORT`             | Yes      | SMTP connection port                                              |
+| `EMAIL_HOST`             | Yes      | SMTP server hostname                                              |
+| `EMAIL_PASS`             | Yes      | SMTP authentication password                                      |
+| `SUPPORT_RECEIVER_EMAIL` | Yes      | Destination email for user support queries                        |
+| `ADMIN_EMAIL`            | Yes      | Email address for seeding the default Super Admin user            |
+| `ADMIN_PASSWORD`         | Yes      | Password for seeding the default Super Admin user                 |
+| `TWILIO_ACCOUNT_SID`     | Yes      | Twilio account SID                                                |
+| `TWILIO_AUTH_TOKEN`      | Yes      | Twilio authentication token                                       |
+| `TWILIO_SERVICE_SID`     | Yes      | Twilio verification service SID                                   |
 
 ## Available Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| `dev` | `ts-node-dev --respawn --transpile-only src/server.ts` | Starts the server in development mode with automatic hot reloading. |
-| `start` | `node dist/server.js` | Runs the compiled JavaScript application in production mode. |
-| `build` | `tsc` | Compiles TypeScript source files into JavaScript inside the `dist` directory. |
-| `format` | `prettier . --write` | Formats codebase using Prettier. |
-
-
+| Script   | Command                                                | Description                                                                   |
+| -------- | ------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `dev`    | `ts-node-dev --respawn --transpile-only src/server.ts` | Starts the server in development mode with automatic hot reloading.           |
+| `start`  | `node dist/server.js`                                  | Runs the compiled JavaScript application in production mode.                  |
+| `build`  | `tsc`                                                  | Compiles TypeScript source files into JavaScript inside the `dist` directory. |
+| `format` | `prettier . --write`                                   | Formats codebase using Prettier.                                              |
 
 ## Database
 
@@ -183,29 +184,32 @@ The application requires the following environment variables defined in `.env`:
 The project includes automatically generated Entity Relationship Diagrams (ERDs) mapping the Mongoose schemas and relationships across modules.
 
 #### System-Wide ER Diagram
+
 Below is the rendered project-wide database structure:
 
 ![System-Wide ER Diagram](./docs/erd/modules/whole-er-diagram/er-diagram.png)
 
 #### Module-Specific Diagrams
+
 For a focused view of each module, check the following directories:
-* **User:** [PNG](./docs/erd/modules/user/er-diagram.png)
-* **Banner:** [PNG](./docs/erd/modules/banner/er-diagram.png)
-* **Breaks:** [PNG](./docs/erd/modules/breaks/er-diagram.png)
-* **Chat:** [PNG](./docs/erd/modules/chat/er-diagram.png)
-* **FAQ:** [PNG](./docs/erd/modules/faq/er-diagram.png)
-* **FCM Token:** [PNG](./docs/erd/modules/fcmToken/er-diagram.png)
-* **Focus Session:** [PNG](./docs/erd/modules/focusSession/er-diagram.png)
-* **Friends:** [PNG](./docs/erd/modules/friends/er-diagram.png)
-* **Message:** [PNG](./docs/erd/modules/message/er-diagram.png)
-* **Modes:** [PNG](./docs/erd/modules/modes/er-diagram.png)
-* **Notification:** [PNG](./docs/erd/modules/notification/er-diagram.png)
-* **Personal Reminder:** [PNG](./docs/erd/modules/personalReminder/er-diagram.png)
-* **Registered Device:** [PNG](./docs/erd/modules/registeredDevice/er-diagram.png)
-* **ResetToken:** [PNG](./docs/erd/modules/resetToken/er-diagram.png)
-* **Rule:** [PNG](./docs/erd/modules/rule/er-diagram.png)
-* **Settings:** [PNG](./docs/erd/modules/settings/er-diagram.png)
-* **Support:** [PNG](./docs/erd/modules/support/er-diagram.png)
+
+- **User:** [PNG](./docs/erd/modules/user/er-diagram.png)
+- **Banner:** [PNG](./docs/erd/modules/banner/er-diagram.png)
+- **Breaks:** [PNG](./docs/erd/modules/breaks/er-diagram.png)
+- **Chat:** [PNG](./docs/erd/modules/chat/er-diagram.png)
+- **FAQ:** [PNG](./docs/erd/modules/faq/er-diagram.png)
+- **FCM Token:** [PNG](./docs/erd/modules/fcmToken/er-diagram.png)
+- **Focus Session:** [PNG](./docs/erd/modules/focusSession/er-diagram.png)
+- **Friends:** [PNG](./docs/erd/modules/friends/er-diagram.png)
+- **Message:** [PNG](./docs/erd/modules/message/er-diagram.png)
+- **Modes:** [PNG](./docs/erd/modules/modes/er-diagram.png)
+- **Notification:** [PNG](./docs/erd/modules/notification/er-diagram.png)
+- **Personal Reminder:** [PNG](./docs/erd/modules/personalReminder/er-diagram.png)
+- **Registered Device:** [PNG](./docs/erd/modules/registeredDevice/er-diagram.png)
+- **ResetToken:** [PNG](./docs/erd/modules/resetToken/er-diagram.png)
+- **Rule:** [PNG](./docs/erd/modules/rule/er-diagram.png)
+- **Settings:** [PNG](./docs/erd/modules/settings/er-diagram.png)
+- **Support:** [PNG](./docs/erd/modules/support/er-diagram.png)
 
 ## Authentication & Authorization
 
@@ -239,13 +243,12 @@ The application consists of the following 17 business modules:
 - **User**: Manages user profiles, roles, avatars, and status updates.
 - **Winner**: Declares, tracks, and manages lottery contest winners.
 
-
-
 ## Running the Project
 
 ### Development Mode
 
 Run the server with live reloading:
+
 ```bash
 npm run dev
 ```
@@ -253,6 +256,7 @@ npm run dev
 ### Build for Production
 
 Compile TypeScript files to JavaScript:
+
 ```bash
 npm run build
 ```
@@ -260,6 +264,7 @@ npm run build
 ### Production Mode
 
 Run the compiled production server:
+
 ```bash
 npm run start
 ```
@@ -267,10 +272,10 @@ npm run start
 ### Code Formatting
 
 Format source code according to Prettier rules:
+
 ```bash
 npm run format
 ```
-
 
 ## Logging
 
@@ -301,5 +306,3 @@ ISC
 ## Developer
 
 Moshfiqur Rahman - moshfiqurrahman37@gmail.com
-
-

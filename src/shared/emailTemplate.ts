@@ -1,4 +1,8 @@
-import { ICreateAccount, IResetPassword, IAccountStatus } from "../types/emailTemplate";
+import {
+  ICreateAccount,
+  IResetPassword,
+  IAccountStatus,
+} from "../types/emailTemplate";
 
 const PRIMARY_COLOR = "#a90707";
 const BG_COLOR = "#ffffff";
@@ -81,7 +85,7 @@ const createAccount = (values: ICreateAccount) => {
 
   return {
     to: values.email,
-    subject: "GiftBox – Verify Your Account",
+    subject: "GiftBox - Verify Your Account",
     html: baseLayout(content),
   };
 };
@@ -123,7 +127,7 @@ const resetPassword = (values: IResetPassword) => {
 
   return {
     to: values.email,
-    subject: "GiftBox – Password Reset Code",
+    subject: "GiftBox - Password Reset Code",
     html: baseLayout(content),
   };
 };
@@ -155,7 +159,7 @@ const accountDeactivated = (values: IAccountStatus) => {
 
   return {
     to: values.email,
-    subject: "GiftBox – Account Deactivation Notice",
+    subject: "GiftBox - Account Deactivation Notice",
     html: baseLayout(content),
   };
 };

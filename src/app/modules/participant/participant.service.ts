@@ -15,8 +15,6 @@ import { User } from "../user/user.model";
 import { USER_ROLES } from "../../../enums/user";
 import { sendNotifications } from "../../../helpers/notificationsHelper";
 
-
-
 const createParticipantToDB = async (payload: TLotteryParticipant) => {
   const { lotteryId, userId, paymentProof } = payload;
 
@@ -42,13 +40,19 @@ const createParticipantToDB = async (payload: TLotteryParticipant) => {
     userId,
   });
 
-  if (alreadyJoined && alreadyJoined.status !== LOTTERY_PARTICIPANT_STATUS.RETRY) {
+  if (
+    alreadyJoined &&
+    alreadyJoined.status !== LOTTERY_PARTICIPANT_STATUS.RETRY
+  ) {
     throw new ApiError(StatusCodes.CONFLICT, "You already joined this lottery");
   }
 
   let participant;
 
-  if (alreadyJoined && alreadyJoined.status === LOTTERY_PARTICIPANT_STATUS.RETRY) {
+  if (
+    alreadyJoined &&
+    alreadyJoined.status === LOTTERY_PARTICIPANT_STATUS.RETRY
+  ) {
     alreadyJoined.paymentProof = paymentProof;
     alreadyJoined.amount = lottery.ticketPrice;
     alreadyJoined.status = LOTTERY_PARTICIPANT_STATUS.PENDING;
@@ -227,9 +231,7 @@ const updateParticipantStatusIntoDB = async (
   }
 
   // prevent double finalization
-  if (
-    participant.status === LOTTERY_PARTICIPANT_STATUS.APPROVED
-  ) {
+  if (participant.status === LOTTERY_PARTICIPANT_STATUS.APPROVED) {
     throw new ApiError(400, "This participant is already finalized");
   }
 
@@ -244,7 +246,7 @@ const updateParticipantStatusIntoDB = async (
   if (!allowedTransitions.includes(transition)) {
     throw new ApiError(
       400,
-      `Invalid status transition: ${participant.status} → ${status}`,
+      `Invalid status transition: ${participant.status} -> ${status}`,
     );
   }
 

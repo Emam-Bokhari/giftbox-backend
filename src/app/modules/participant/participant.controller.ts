@@ -9,7 +9,7 @@ const createParticipant = catchAsync(async (req, res) => {
     ...req.body,
     userId,
   });
-  
+
   sendResponse(res, {
     success: true,
     statusCode: 200,

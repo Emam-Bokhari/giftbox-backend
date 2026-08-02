@@ -11,7 +11,6 @@ import { serverAdapter } from "./config/bullboard";
 
 const app: Application = express();
 
-
 app.get("/download/app", (req, res) => {
   const filePath = path.join(process.cwd(), "download", "app", "gift-box.apk");
 

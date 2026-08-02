@@ -17,7 +17,7 @@ export interface INotificationPayload {
 
 class NotificationHelper {
   /**
-   * 🟢 MAIN METHOD: SEND TO SINGLE USER
+   * MAIN METHOD: SEND TO SINGLE USER
    * Usage: notificationHelper.sendToUser(userId, payload);
    */
   async sendToUser(
@@ -28,7 +28,7 @@ class NotificationHelper {
   }
 
   /**
-   * 🔵 MAIN METHOD: SEND TO MULTIPLE USERS
+   * MAIN METHOD: SEND TO MULTIPLE USERS
    * Usage: notificationHelper.sendToBatch([id1, id2, id3], payload);
    */
   async sendToBatch(
@@ -38,11 +38,8 @@ class NotificationHelper {
     try {
       if (!userIds.length) return;
 
-      // 1. Filter Users: Only get users who exist, are verified, and have notifications ON
       const validUsers = await User.find({
         _id: { $in: userIds },
-        // isVerified: true,
-        // notificationStatus: true,
       })
         .select("_id")
         .lean();
@@ -51,7 +48,6 @@ class NotificationHelper {
 
       if (validUserIds.length === 0) return;
 
-      // 2. Fetch FCM Tokens for these users
       const tokensData = await DeviceToken.find({
         userId: { $in: validUserIds },
         fcmToken: { $exists: true, $ne: "" },
@@ -61,34 +57,30 @@ class NotificationHelper {
 
       const fcmTokens = tokensData.map((t) => t.fcmToken);
 
-      // --- PARALLEL EXECUTION START ---
       const tasks = [];
 
-      // TASK A: Send Push Notifications (only if tokens exist)
       if (fcmTokens.length > 0) {
         tasks.push(this.sendToFCM(fcmTokens, payload));
       }
 
-      // TASK B: Save to Database (Always, even if they don't have a token)
       if (validUserIds.length > 0) {
         tasks.push(this.saveToDatabase(validUserIds, payload));
       }
 
       await Promise.allSettled(tasks);
-      // --- PARALLEL EXECUTION END ---
 
       logger.info(
         colors.green(
-          `✅ Notification flow completed for ${validUserIds.length} users.`,
+          `Notification flow completed for ${validUserIds.length} users.`,
         ),
       );
     } catch (error) {
-      logger.error(colors.red("❌ NotificationHelper Error:"), error);
+      logger.error(colors.red("NotificationHelper Error:"), error);
     }
   }
 
   /**
-   * 🟠 SEND CHAT MESSAGE NOTIFICATION
+   * SEND CHAT MESSAGE NOTIFICATION
    */
   async sendChatMessage(chat: any, message: any) {
     try {
@@ -98,14 +90,12 @@ class NotificationHelper {
         `${message.sender.firstName || ""} ${message.sender.lastName || ""}`.trim() ||
         "User";
 
-      // message format body
       let bodyText = message.text;
       if (message.isDeleted) bodyText = "This message was deleted";
       if (!bodyText && message.productId)
         bodyText = "Sent a product attachment";
       if (!bodyText) bodyText = "Sent a new message";
 
-      // Remove sender from recipients
       const recipients = chat.participants
         .filter((p: any) => {
           const pId = p._id ? p._id.toString() : p.toString();
@@ -127,17 +117,16 @@ class NotificationHelper {
         },
       });
     } catch (error) {
-      logger.error(colors.red("❌ Error inside sendChatMessage:"), error);
+      logger.error(colors.red("Error inside sendChatMessage:"), error);
     }
   }
 
   /**
-   * 🔒 PRIVATE: Handle Firebase Logic & Token Cleanup
+   * PRIVATE: Handle Firebase Logic & Token Cleanup
    * Chunks tokens into batches of 500 (Firebase limit)
    */
   private async sendToFCM(tokens: string[], payload: INotificationPayload) {
     try {
-      // ✅ Fixed: Chunk tokens into batches of 500 (Firebase multicast limit)
       const BATCH_SIZE = 500;
       const chunks: string[][] = [];
       for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
@@ -158,7 +147,6 @@ class NotificationHelper {
           .messaging()
           .sendEachForMulticast(message);
 
-        // Cleanup Invalid Tokens
         if (response.failureCount > 0) {
           const failedTokens: string[] = [];
           response.responses.forEach((resp: any, idx: number) => {
@@ -177,7 +165,7 @@ class NotificationHelper {
             await DeviceToken.deleteMany({ fcmToken: { $in: failedTokens } });
             logger.info(
               colors.yellow(
-                `🗑️ Cleaned up ${failedTokens.length} invalid tokens.`,
+                `Cleaned up ${failedTokens.length} invalid tokens.`,
               ),
             );
           }
@@ -189,7 +177,7 @@ class NotificationHelper {
   }
 
   /**
-   * 🔒 PRIVATE: Handle Database Saving
+   * PRIVATE: Handle Database Saving
    */
   private async saveToDatabase(userIds: any[], payload: INotificationPayload) {
     try {

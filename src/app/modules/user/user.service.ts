@@ -34,7 +34,6 @@ const createAdminToDB = async (payload: any): Promise<IUser> => {
     throw new ApiError(StatusCodes.CONFLICT, "This Email already taken");
   }
 
-  // ⚠️ IMPORTANT: password must come from payload (or generate if needed)
   const rawPassword = payload.password;
 
   const adminPayload = {
@@ -98,7 +97,7 @@ const createAdminToDB = async (payload: any): Promise<IUser> => {
                 </div>
 
                 <p style="margin-top:25px;font-size:13px;color:#777;">
-                  ⚠️ Please change your password after first login for security.
+                  Please change your password after first login for security.
                 </p>
 
               </td>

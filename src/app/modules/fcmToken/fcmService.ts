@@ -35,13 +35,11 @@ const saveDeviceToken = async (
     );
 
     logger.info(
-      colors.green(
-        `✅ Token saved: User ${userId}, Device ${payload.deviceId}`,
-      ),
+      colors.green(`Token saved: User ${userId}, Device ${payload.deviceId}`),
     );
     return result;
   } catch (error) {
-    logger.error(colors.red("❌ Error saving device token:"), error);
+    logger.error(colors.red("Error saving device token:"), error);
     throw error;
   }
 };

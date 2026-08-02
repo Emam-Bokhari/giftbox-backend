@@ -36,7 +36,7 @@ const createLotteryToDB = async (payload: TLottery) => {
   if (isNaN(endTime.getTime())) {
     throw new ApiError(400, "Invalid end date");
   }
-  
+
   const ticketNumber = await generateTicketId();
   payload.ticketNumber = ticketNumber;
 
@@ -122,47 +122,47 @@ const getActiveLotteriesFromDB = async (userId: string) => {
   }
 
   // check if user already participated in each lottery
-   const enrichedLotteries = await Promise.all(
-     activeLotteries.map(async (lottery) => {
-       const isParticipated = await LotteryParticipant.exists({
-         lotteryId: lottery._id,
-         userId: userId,
-       });
+  const enrichedLotteries = await Promise.all(
+    activeLotteries.map(async (lottery) => {
+      const isParticipated = await LotteryParticipant.exists({
+        lotteryId: lottery._id,
+        userId: userId,
+      });
 
-       // Count approved participants
-       const approvedCount = await LotteryParticipant.countDocuments({
-         lotteryId: lottery._id,
-         status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
-       });
+      // Count approved participants
+      const approvedCount = await LotteryParticipant.countDocuments({
+        lotteryId: lottery._id,
+        status: LOTTERY_PARTICIPANT_STATUS.APPROVED,
+      });
 
-       const totalParticipants =
-         (lottery.manualParticipants || 0) + approvedCount;
+      const totalParticipants =
+        (lottery.manualParticipants || 0) + approvedCount;
 
-       // role based response
-       // ADMIN → limited fields
-       if (
-         user.role === USER_ROLES.ADMIN ||
-         user.role === USER_ROLES.SUPER_ADMIN
-       ) {
-         return {
-           _id: lottery._id,
-           title: lottery.title,
-           startAt: lottery.startAt,
-           endAt: lottery.endAt,
-           createdAt: lottery.createdAt,
-           isParticipated: !!isParticipated,
-           manualParticipants: totalParticipants,
-         };
-       }
+      // role based response
+      // ADMIN -> limited fields
+      if (
+        user.role === USER_ROLES.ADMIN ||
+        user.role === USER_ROLES.SUPER_ADMIN
+      ) {
+        return {
+          _id: lottery._id,
+          title: lottery.title,
+          startAt: lottery.startAt,
+          endAt: lottery.endAt,
+          createdAt: lottery.createdAt,
+          isParticipated: !!isParticipated,
+          manualParticipants: totalParticipants,
+        };
+      }
 
-       // USER → full data
-       return {
-         ...lottery,
-         isParticipated: !!isParticipated,
-         manualParticipants: totalParticipants,
-       };
-     }),
-   );
+      // USER -> full data
+      return {
+        ...lottery,
+        isParticipated: !!isParticipated,
+        manualParticipants: totalParticipants,
+      };
+    }),
+  );
 
   return enrichedLotteries;
 };
@@ -194,11 +194,8 @@ const getLotteryByIdFromDB = async (id: string, userId: string) => {
   const totalParticipants = (lottery.manualParticipants || 0) + approvedCount;
 
   // role based response
-  // ADMIN → limited fields
-  if (
-    user.role === USER_ROLES.ADMIN ||
-    user.role === USER_ROLES.SUPER_ADMIN
-  ) {
+  // ADMIN -> limited fields
+  if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.SUPER_ADMIN) {
     return {
       _id: lottery._id,
       title: lottery.title,
@@ -210,7 +207,7 @@ const getLotteryByIdFromDB = async (id: string, userId: string) => {
     };
   }
 
-  // USER → full data
+  // USER -> full data
   return {
     ...lottery,
     isParticipated: !!isParticipated,
@@ -225,7 +222,6 @@ const getAllLotteriesFromDB = async (query: Record<string, unknown>) => {
     .sort()
     .paginate()
     .fields();
-    
 
   const data = await lotteryQuery.modelQuery;
   const meta = await lotteryQuery.countTotal();
@@ -350,7 +346,8 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
 
         const isCurrentDate =
           currentValue instanceof Date ||
-          (typeof currentValue === "string" && !isNaN(Date.parse(currentValue)));
+          (typeof currentValue === "string" &&
+            !isNaN(Date.parse(currentValue)));
         const isNewDate =
           newValue instanceof Date ||
           (typeof newValue === "string" && !isNaN(Date.parse(newValue)));
@@ -373,7 +370,8 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
             (/^\d{4}-\d{2}-\d{2}$/.test(newValue) ||
               (!newValue.includes("T") && !newValue.includes(":")))
           ) {
-            isSame = d1.toISOString().split("T")[0] === d2.toISOString().split("T")[0];
+            isSame =
+              d1.toISOString().split("T")[0] === d2.toISOString().split("T")[0];
           }
         } else {
           isSame = String(currentValue) === String(newValue);
@@ -402,7 +400,8 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
 
         const isCurrentDate =
           currentValue instanceof Date ||
-          (typeof currentValue === "string" && !isNaN(Date.parse(currentValue)));
+          (typeof currentValue === "string" &&
+            !isNaN(Date.parse(currentValue)));
         const isNewDate =
           newValue instanceof Date ||
           (typeof newValue === "string" && !isNaN(Date.parse(newValue)));
@@ -423,7 +422,8 @@ const updateLotteryIntoDB = async (id: string, payload: any) => {
             (/^\d{4}-\d{2}-\d{2}$/.test(newValue) ||
               (!newValue.includes("T") && !newValue.includes(":")))
           ) {
-            isSame = d1.toISOString().split("T")[0] === d2.toISOString().split("T")[0];
+            isSame =
+              d1.toISOString().split("T")[0] === d2.toISOString().split("T")[0];
           }
         } else {
           isSame = String(currentValue) === String(newValue);
@@ -483,7 +483,7 @@ const updateLotteryStatusIntoDB = async (
     throw new ApiError(404, "Lottery not found");
   }
 
-  // If already DRAWN → no further change allowed
+  // If already DRAWN -> no further change allowed
   if (lottery.status === LOTTERY_STATUS.DRAWN) {
     throw new ApiError(400, "Cannot change status of a drawn lottery");
   }
