@@ -1,6 +1,7 @@
 node_modules
 # uploads
 /winston
-README.md
+/errors
 dist
 .env
+scripts/

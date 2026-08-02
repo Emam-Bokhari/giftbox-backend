@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="Electron" modified="2026-08-02T10:42:03.607Z" agent="Antigravity" version="24.0.0" type="device">
+  <diagram id="Page-1" name="Page-1">
+    <mxGraphModel dx="1422" dy="804" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="600" pageHeight="1060" math="0" shadow="0" background="#FFFFFF">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="column_0" value="Core Module: User" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;dashed=1;arcSize=6;align=left;verticalAlign=top;spacingLeft=15;spacingTop=12;fontColor=#000000;fontSize=14;fontStyle=1;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="100" width="400" height="860" as="geometry" />
+        </mxCell>
+        <mxCell id="table_User" value="User" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=38;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#000000;swimlaneFillColor=#FFFFFF;strokeColor=#000000;strokeWidth=2;fontColor=#FFFFFF;fontSize=13;align=center;" vertex="1" parent="column_0">
+          <mxGeometry x="30" y="60" width="340" height="770" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User__id" value="&lt;b&gt;_id&lt;/b&gt;: &lt;b&gt;objectId&lt;/b&gt; &lt;span style=&quot;background-color:#000000;color:#FFFFFF;padding:1px 3px;font-size:9px;font-weight:bold;border-radius:2px;margin-left:4px;&quot;&gt;PK&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="38" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_name" value="&lt;b&gt;name&lt;/b&gt;: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="66" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_role" value="role: string&lt;span style=&quot;background-color:#000000;color:#FFFFFF;padding:1px 3px;font-size:9px;font-weight:bold;border-radius:2px;margin-left:4px;&quot;&gt;ENUM&lt;/span&gt; &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: USER_ROLES.USER, enum: ADMIN|SUPER_ADMIN|USER)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="94" width="340" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_email" value="email: string&lt;span style=&quot;background-color:#000000;color:#FFFFFF;padding:1px 3px;font-size:9px;font-weight:bold;border-radius:2px;margin-left:4px;&quot;&gt;UK&lt;/span&gt;&lt;span style=&quot;background-color:#000000;color:#FFFFFF;padding:1px 3px;font-size:9px;font-weight:bold;border-radius:2px;margin-left:4px;&quot;&gt;IDX&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="137" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_phone" value="phone: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="165" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_countryCode" value="countryCode: string &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: &apos;+243&apos;)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="193" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_dateOfBirth" value="dateOfBirth: date &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: null)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="221" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_password" value="&lt;b&gt;password&lt;/b&gt;: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="249" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_verified" value="verified: boolean &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: false)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="277" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_status" value="status: string&lt;span style=&quot;background-color:#000000;color:#FFFFFF;padding:1px 3px;font-size:9px;font-weight:bold;border-radius:2px;margin-left:4px;&quot;&gt;ENUM&lt;/span&gt; &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: STATUS.ACTIVE, enum: ACTIVE|INACTIVE)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="305" width="340" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_profileImage" value="profileImage: string &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: &apos;&apos;)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="348" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_coverImage" value="coverImage: string &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: &apos;&apos;)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="376" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_city" value="city: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="404" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_gender" value="gender: string&lt;span style=&quot;background-color:#000000;color:#FFFFFF;padding:1px 3px;font-size:9px;font-weight:bold;border-radius:2px;margin-left:4px;&quot;&gt;ENUM&lt;/span&gt; &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(enum: MALE|FEMALE)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="432" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_firebaseUid" value="firebaseUid: string&lt;span style=&quot;background-color:#000000;color:#FFFFFF;padding:1px 3px;font-size:9px;font-weight:bold;border-radius:2px;margin-left:4px;&quot;&gt;UK&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="460" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_deviceToken" value="deviceToken: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="488" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_location_type" value="location_type: string&lt;span style=&quot;background-color:#000000;color:#FFFFFF;padding:1px 3px;font-size:9px;font-weight:bold;border-radius:2px;margin-left:4px;&quot;&gt;ENUM&lt;/span&gt; &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: &apos;Point&apos;, enum: Point)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="516" width="340" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_location_coordinates" value="location_coordinates: number[] &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: undefined)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="559" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_location_address" value="location_address: string &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: &apos;&apos;)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="587" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_authentication_isResetPassword" value="authentication_isResetPassword: boolean &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: false)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="615" width="340" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_authentication_oneTimeCode" value="authentication_oneTimeCode: number &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: null)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="658" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_authentication_expireAt" value="authentication_expireAt: date &lt;span style=&quot;color:#000000; font-size:10px; font-style:italic;&quot;&gt;(def: null)&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="686" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_createdAt" value="&lt;b&gt;createdAt&lt;/b&gt;: date" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="714" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="field_User_updatedAt" value="&lt;b&gt;updatedAt&lt;/b&gt;: date" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=10;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontSize=11;fontColor=#000000;" vertex="1" parent="table_User">
+          <mxGeometry y="742" width="340" height="28" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
