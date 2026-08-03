@@ -21,9 +21,8 @@ The backend APIs in this project were developed based on the approved UI/UX desi
 - **User Authentication & Authorization**: Local authentication via JWT access and refresh tokens, social login support (Google OAuth 2.0, Facebook, Firebase ID tokens), and Role-Based Access Control (RBAC).
 - **Lottery & Contest Management**: Create, update, and manage lottery events, rules, banners, and winner selections.
 - **Participant Tracking**: Event registration, participant verification, and activity logging.
-- **Real-Time Communication**: WebSocket-based messaging and chat channels powered by Socket.IO.
+- **Real-Time Communication**: Real-time event updates and notifications powered by Socket.IO.
 - **Push & Email Notifications**: Firebase Cloud Messaging (FCM) integration for push notifications and Nodemailer for transactional email delivery.
-- **SMS Integration**: Phone number verification and notifications via Twilio API.
 - **Background Jobs & Queues**: Asynchronous background queue processing for emails, notifications, and scheduled events using BullMQ and Redis, with real-time queue management via Bull-Board.
 - **Scheduled Tasks**: Cron job execution using `node-cron`.
 - **File Uploads**: File storage and static asset serving for user avatars, banners, and attachments via Multer.
@@ -44,7 +43,6 @@ The backend APIs in this project were developed based on the approved UI/UX desi
 | Cache & Queue           | Redis, ioredis, BullMQ                           |
 | Queue Dashboard         | Bull-Board                                       |
 | Task Scheduling         | Node-Cron                                        |
-| SMS Provider            | Twilio                                           |
 | Push Notifications      | Firebase Cloud Messaging (FCM)                   |
 | Email Provider          | Nodemailer                                       |
 | File Storage            | Multer (Local Disk Storage)                      |
@@ -158,9 +156,6 @@ The application requires the following environment variables defined in `.env`:
 | `SUPPORT_RECEIVER_EMAIL` | Yes      | Destination email for user support queries                        |
 | `ADMIN_EMAIL`            | Yes      | Email address for seeding the default Super Admin user            |
 | `ADMIN_PASSWORD`         | Yes      | Password for seeding the default Super Admin user                 |
-| `TWILIO_ACCOUNT_SID`     | Yes      | Twilio account SID                                                |
-| `TWILIO_AUTH_TOKEN`      | Yes      | Twilio authentication token                                       |
-| `TWILIO_SERVICE_SID`     | Yes      | Twilio verification service SID                                   |
 
 ## Available Scripts
 

@@ -80,48 +80,6 @@ class NotificationHelper {
   }
 
   /**
-   * SEND CHAT MESSAGE NOTIFICATION
-   */
-  async sendChatMessage(chat: any, message: any) {
-    try {
-      const senderId = message.sender._id.toString();
-      const senderName =
-        message.sender.name ||
-        `${message.sender.firstName || ""} ${message.sender.lastName || ""}`.trim() ||
-        "User";
-
-      let bodyText = message.text;
-      if (message.isDeleted) bodyText = "This message was deleted";
-      if (!bodyText && message.productId)
-        bodyText = "Sent a product attachment";
-      if (!bodyText) bodyText = "Sent a new message";
-
-      const recipients = chat.participants
-        .filter((p: any) => {
-          const pId = p._id ? p._id.toString() : p.toString();
-          return pId !== senderId;
-        })
-        .map((p: any) => p._id || p);
-
-      if (recipients.length === 0) return;
-
-      await this.sendToBatch(recipients, {
-        title: senderName,
-        body: bodyText.substring(0, 100),
-        type: NOTIFICATION_TYPE.MESSAGE_NEW,
-        data: {
-          type: NOTIFICATION_TYPE.MESSAGE_NEW,
-          chatId: chat._id.toString(),
-          messageId: message._id.toString(),
-          click_action: "FLUTTER_NOTIFICATION_CLICK",
-        },
-      });
-    } catch (error) {
-      logger.error(colors.red("Error inside sendChatMessage:"), error);
-    }
-  }
-
-  /**
    * PRIVATE: Handle Firebase Logic & Token Cleanup
    * Chunks tokens into batches of 500 (Firebase limit)
    */
