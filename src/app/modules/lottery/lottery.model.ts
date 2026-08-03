@@ -65,13 +65,6 @@ const lotterySchema = new Schema<TLottery>(
       type: Date,
       required: true,
     },
-    createdAt: {
-      type: Date,
-    },
-
-    updatedAt: {
-      type: Date,
-    },
   },
   {
     timestamps: true,
